@@ -1,0 +1,12 @@
+result
+result-*
+.direnv/
+node_modules/
+dist/
+site-out
+app/.astro/
+app/.dev.vars
+app/.env
+app/.wrangler/
+app/worker-configuration.d.ts
+.plans/

@@ -1,0 +1,8 @@
+# Copy to app/.dev.vars (gitignored) for local dev.
+# Deployed values are set once with: just secret <KEY>
+# (or in the Pages dashboard for the Git-integration deploy).
+AUTH_SECRET=dev-only-secret-change-me
+ADMIN_EMAIL=admin@example.com
+ADMIN_PASSWORD=changeme
+# The D1 database is available locally through the binding (see wrangler.toml):
+# apply the schema and seed with `just db-apply local` + `just db-seed local`.

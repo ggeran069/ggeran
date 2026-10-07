@@ -1,0 +1,17 @@
+---
+/** Labeled form field wrapper (replaces the React Field primitive). */
+interface Props {
+  label: string;
+  hint?: string;
+  required?: boolean;
+}
+const { label, hint, required } = Astro.props;
+---
+<div class="space-y-2">
+  <span class="label">
+    {label}
+    {required && <span class="text-destructive ml-1">*</span>}
+  </span>
+  <slot />
+  {hint && <p class="text-xs text-on-surface-variant">{hint}</p>}
+</div>

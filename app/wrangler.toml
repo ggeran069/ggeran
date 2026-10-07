@@ -1,0 +1,21 @@
+# Cloudflare Pages config for ggeran.
+# Bindings here apply on `wrangler pages deploy` (and to `astro dev` via the
+# adapter's platformProxy/miniflare). Secrets are NOT in this file — set them
+# with `wrangler pages secret put <KEY>` (or `just secret <KEY>`); local dev
+# reads app/.dev.vars instead. For a Git-connected Pages project, mirror the
+# bindings in the dashboard (Settings → Bindings/Variables) if the build
+# doesn't pick them up from this file.
+name = "ggeran"
+pages_build_output_dir = "dist"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "ggeran-media"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ggeran-db"
+# Replace with the real id printed by: just d1-create
+database_id = "REPLACE_WITH_D1_DATABASE_ID"

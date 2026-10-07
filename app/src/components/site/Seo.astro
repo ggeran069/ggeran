@@ -1,0 +1,39 @@
+---
+/**
+ * SEO head tags. Fixes the source's missing metadataBase/canonical/twitter
+ * coverage: canonical + OG URLs resolve against `Astro.site` (set in
+ * astro.config.mjs), and image URLs are made absolute so OG previews work.
+ */
+interface Props {
+  /** Page title — rendered through the "%s — George Geranios" template. */
+  title?: string;
+  description?: string;
+  /** Path or absolute URL for og:image. */
+  image?: string | null;
+  ogType?: "website" | "article";
+}
+
+const {
+  title,
+  description = "Selected photographic works by George Geranios.",
+  image = null,
+  ogType = "website",
+} = Astro.props;
+
+const site = Astro.site ?? new URL("https://ggeran.pages.dev");
+const fullTitle = title ? `${title} — George Geranios` : "George Geranios";
+const canonical = new URL(Astro.url.pathname, site);
+const ogImage = image ? new URL(image, site) : null;
+---
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical.href} />
+
+<meta property="og:site_name" content="George Geranios" />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:type" content={ogType} />
+<meta property="og:url" content={canonical.href} />
+{ogImage && <meta property="og:image" content={ogImage.href} />}
+<meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+{ogImage && <meta name="twitter:image" content={ogImage.href} />}

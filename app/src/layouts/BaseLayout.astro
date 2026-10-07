@@ -1,0 +1,99 @@
+---
+/**
+ * Public-site shell (port of the Next root layout): fonts, theme init,
+ * SEO tags, sidebar, and the content offset that clears the fixed sidebar.
+ */
+import { ClientRouter } from "astro:transitions";
+
+import "@fontsource/archivo-narrow/400.css";
+import "@fontsource/archivo-narrow/500.css";
+import "@fontsource/archivo-narrow/600.css";
+import "@fontsource/archivo-narrow/700.css";
+import "@fontsource/hanken-grotesk/400.css";
+import "@fontsource/hanken-grotesk/500.css";
+import "@fontsource/hanken-grotesk/600.css";
+import "@fontsource/hanken-grotesk/700.css";
+import "@/styles/global.css";
+
+import Sidebar from "@/components/site/Sidebar.astro";
+import Seo from "@/components/site/Seo.astro";
+import { getSiteContent, parseNavLinks } from "@/lib/data";
+
+interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string | null;
+  ogType?: "website" | "article";
+}
+
+const { title, description, ogImage, ogType } = Astro.props;
+
+const site = await getSiteContent(Astro.locals);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- SPA-style client-side navigation; falls back to full loads in
+         no-JS browsers. AdminLayout deliberately stays MPA. -->
+    <ClientRouter />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" sizes="32x32" />
+
+    <!-- Theme init BEFORE first paint (no FOUC): stored choice, else OS
+         preference, else light — the old next-themes semantics, zero JS lib.
+         Re-applied on astro:after-swap: the ClientRouter swaps <html> on soft
+         navigations, and this inline script is NOT re-run (scripts are
+         diffed), so without the listener dark users get a light flash. -->
+    <script is:inline>
+      (() => {
+        var apply = () => {
+          try {
+            var stored = localStorage.getItem("gg-theme");
+            var dark = stored
+              ? stored === "dark"
+              : window.matchMedia("(prefers-color-scheme: dark)").matches;
+            document.documentElement.classList.toggle("dark", dark);
+          } catch (e) {}
+        };
+        apply();
+        document.addEventListener("astro:after-swap", apply);
+      })();
+    </script>
+
+    <Seo {title} {description} image={ogImage} {ogType} />
+  </head>
+  <body class="bg-background font-body text-on-surface antialiased min-h-screen">
+    <Sidebar
+      contactEmail={site.contactEmail}
+      contactInstagramUrl={site.contactInstagramUrl}
+      nav={{
+        projectsLabel: site.navProjectsLabel ?? "",
+        availableLabel: site.navAvailableLabel ?? "",
+        aboutLabel: site.navAboutLabel ?? "",
+        contactLabel: site.navContactLabel ?? "",
+        showPublications: !!site.navShowPublications,
+        showNews: !!site.navShowNews,
+      }}
+      extraLinks={parseNavLinks(site.navExtraLinks)}
+    />
+    <div class="pt-16 lg:pt-0 lg:ml-[248px] min-h-screen flex flex-col">
+      <main class="flex-1">
+        <slot />
+      </main>
+    </div>
+
+    <script>
+      // Theme toggle — one delegated listener for every toggle button.
+      document.addEventListener("click", (e) => {
+        const btn = (e.target as HTMLElement).closest("[data-theme-toggle]");
+        if (!btn) return;
+        const dark = document.documentElement.classList.toggle("dark");
+        try {
+          localStorage.setItem("gg-theme", dark ? "dark" : "light");
+        } catch {}
+      });
+    </script>
+  </body>
+</html>

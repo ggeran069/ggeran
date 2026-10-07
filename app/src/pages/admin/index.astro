@@ -1,0 +1,47 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminHeader from "@/components/admin/AdminHeader.astro";
+import StorageMeter from "@/components/admin/StorageMeter.astro";
+import { getProjects, getPublications, getNews } from "@/lib/data";
+import { getMediaUsage, quotaMb } from "@/lib/media";
+import { getEnv } from "@/lib/env";
+
+const [projects, publications, news, usage] = await Promise.all([
+  getProjects(Astro.locals),
+  getPublications(Astro.locals),
+  getNews(Astro.locals),
+  getMediaUsage(Astro.locals),
+]);
+const quota = quotaMb(getEnv(Astro.locals));
+
+const cards = [
+  { href: "/admin/projects", label: "Projects", count: projects.length },
+  { href: "/admin/publications", label: "Publications", count: publications.length },
+  { href: "/admin/news", label: "News", count: news.length },
+];
+---
+<AdminLayout title="Dashboard">
+  <div class="px-edge-margin-mobile lg:px-edge-margin-desktop py-gutter">
+    <div class="max-w-[1100px] mx-auto">
+      <AdminHeader title="Dashboard" />
+      <div class="mb-section-gap">
+        <StorageMeter usage={usage} quotaMB={quota} />
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+        {cards.map((c) => (
+          <a
+            href={c.href}
+            class="block border border-structural-gray p-section-gap hover:bg-surface-container-low transition-colors"
+          >
+            <div class="font-display text-display-xl-mobile text-primary">
+              {c.count}
+            </div>
+            <div class="font-display text-label-caps uppercase text-on-surface-variant mt-unit">
+              {c.label}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+</AdminLayout>

@@ -1,0 +1,26 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminHeader from "@/components/admin/AdminHeader.astro";
+import SiteContentForm from "@/components/admin/SiteContentForm.astro";
+import { getDb } from "@/lib/db";
+import { getSiteContent } from "@/lib/data";
+
+const db = getDb(Astro.locals);
+const defaults = await getSiteContent(Astro.locals);
+---
+<AdminLayout title="Site Content">
+  <div class="px-edge-margin-mobile lg:px-edge-margin-desktop py-gutter">
+    <div class="max-w-[1100px] mx-auto">
+      <AdminHeader title="Site Content" />
+
+      {!db && (
+        <p class="font-body text-caption text-on-surface-variant border border-structural-gray p-gutter mb-section-gap">
+          Showing seed preview — set <code>DATABASE_URL</code> and run
+          <code>npm run db:push</code> to enable editing.
+        </p>
+      )}
+
+      <SiteContentForm defaults={defaults} disabled={!db} />
+    </div>
+  </div>
+</AdminLayout>

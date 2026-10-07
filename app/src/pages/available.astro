@@ -1,0 +1,43 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Catalogue, { type CatalogueItem } from "@/components/site/Catalogue.astro";
+import { getAvailableProjects, getSiteContent } from "@/lib/data";
+
+const [projects, site] = await Promise.all([
+  getAvailableProjects(Astro.locals),
+  getSiteContent(Astro.locals),
+]);
+const items: CatalogueItem[] = projects.map((p) => ({
+  href: `/projects/${p.slug}`,
+  ref: p.ref,
+  image: p.image,
+  title: p.title,
+  subtitle: p.series,
+  year: p.year,
+  date: p.date,
+  line1: p.medium,
+  line2: p.dimensions,
+}));
+---
+<BaseLayout title="Available Works" description={site.availableIntro ?? undefined}>
+  <section class="px-edge-margin-mobile lg:px-edge-margin-desktop py-section-gap border-b border-structural-gray">
+    <div class="max-w-[1680px]">
+      <span class="font-display text-label-caps text-on-surface-variant mb-4 block">
+        AVAILABLE WORKS / FOR SALE
+      </span>
+      <h1 class="font-display text-display-xl-mobile lg:text-display-xl uppercase leading-none">
+        {site.availableHeading || "Available Works"}
+      </h1>
+    </div>
+  </section>
+  <section class="px-edge-margin-mobile lg:px-edge-margin-desktop py-section-gap bg-background">
+    <div class="max-w-[1680px]">
+      <Catalogue items={items} noun="Works" />
+      {site.availableIntro && (
+        <p class="mt-section-gap font-body text-caption text-on-surface-variant max-w-md text-center mx-auto">
+          {site.availableIntro}
+        </p>
+      )}
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,18 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminHeader from "@/components/admin/AdminHeader.astro";
+import { actions } from "astro:actions";
+
+// PRG: the action returned data = success → back to the section list.
+const result = Astro.getActionResult(actions.news.create);
+if (result?.data) return Astro.redirect("/admin/news");
+import NewsForm from "@/components/admin/NewsForm.astro";
+---
+<AdminLayout title="New entry">
+  <div class="px-edge-margin-mobile lg:px-edge-margin-desktop py-gutter">
+    <div class="max-w-[1100px] mx-auto">
+      <AdminHeader title="New entry" />
+      <NewsForm mode="create" />
+    </div>
+  </div>
+</AdminLayout>

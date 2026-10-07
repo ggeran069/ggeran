@@ -1,0 +1,78 @@
+---
+import { desc } from "drizzle-orm";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminHeader from "@/components/admin/AdminHeader.astro";
+import { getDb } from "@/lib/db";
+import { getProjects } from "@/lib/data";
+import { projects } from "@/db/schema";
+import { actions } from "astro:actions";
+
+// Read from the DB when present (edits/deletes reflect); otherwise show the
+// seed fallback as a read-only preview.
+const db = getDb(Astro.locals);
+const rows = db
+  ? (await db.select().from(projects).orderBy(desc(projects.year))).map((r) => ({
+      id: r.id as number | undefined,
+      title: r.title,
+      year: r.year,
+      availability: r.availability,
+    }))
+  : (await getProjects(Astro.locals)).map((p) => ({
+      id: undefined as number | undefined,
+      title: p.title,
+      year: p.year,
+      availability: p.availability,
+    }));
+
+const delError = Astro.getActionResult(actions.projects.delete)?.error?.message ?? null;
+---
+<AdminLayout title="Projects">
+  <div class="px-edge-margin-mobile lg:px-edge-margin-desktop py-gutter">
+    <div class="max-w-[1100px] mx-auto">
+      <AdminHeader title="Projects" />
+
+      {!db && (
+        <p class="font-body text-caption text-on-surface-variant border border-structural-gray p-gutter mb-section-gap">
+          Showing seed preview — set <code>DATABASE_URL</code> and run
+          <code>npm run db:push</code> to enable editing.
+        </p>
+      )}
+
+      {delError && <p class="text-destructive text-sm mb-gutter">{delError}</p>}
+
+      <div class="mb-section-gap">
+        <a href="/admin/projects/new" class="btn btn-primary">+ New project</a>
+      </div>
+
+      <div class="border border-structural-gray">
+        <div class="grid grid-cols-[1fr_6rem_8rem_8rem] gap-gutter px-gutter py-unit font-display text-label-caps uppercase text-on-surface-variant border-b border-structural-gray">
+          <span>Title</span>
+          <span>Year</span>
+          <span>Availability</span>
+          <span></span>
+        </div>
+        {rows.length === 0 && (
+          <p class="px-gutter py-gutter text-on-surface-variant">No projects yet.</p>
+        )}
+        {rows.map((p) => (
+          <div class="grid grid-cols-[1fr_6rem_8rem_8rem] gap-gutter px-gutter py-unit items-center border-b border-structural-gray last:border-0">
+            <span class="truncate">{p.title}</span>
+            <span class="text-on-surface-variant">{p.year ?? "—"}</span>
+            <span class="text-on-surface-variant text-sm">{p.availability ?? "—"}</span>
+            <div class="flex gap-unit">
+              {db && p.id !== undefined && (
+                <>
+                  <a href={`/admin/projects/${p.id}`} class="btn btn-outline btn-sm">Edit</a>
+                  <form method="POST" action={actions.projects.delete}>
+                    <input type="hidden" name="id" value={p.id} />
+                    <button type="submit" class="btn btn-outline btn-sm">Delete</button>
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</AdminLayout>

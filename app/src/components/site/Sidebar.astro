@@ -1,0 +1,226 @@
+---
+/**
+ * Fixed top bar (mobile) / sidebar (desktop), ported from sidebar.tsx.
+ * React state is replaced by: server-computed active link + one vanilla script
+ * for the mobile overlay. A11y fixes vs the source: the closed overlay is
+ * `inert` (links leave the tab order), focus moves into the menu on open and
+ * returns to the hamburger on close, and external links are never "active".
+ */
+import ModeToggle from "@/components/site/ModeToggle.astro";
+import type { NavLink } from "@/lib/data";
+
+interface Props {
+  contactEmail: string | null;
+  contactInstagramUrl: string | null;
+  nav: {
+    projectsLabel: string;
+    availableLabel: string;
+    aboutLabel: string;
+    contactLabel: string;
+    showPublications: boolean;
+    showNews: boolean;
+  };
+  extraLinks?: NavLink[];
+}
+
+const { contactEmail, contactInstagramUrl, nav, extraLinks = [] } = Astro.props;
+
+const path = Astro.url.pathname;
+// Exact match, or section prefix ("/projects" matches "/projects/foo") —
+// without the old startsWith bug that would also match "/projects-archive".
+const isActive = (href: string) =>
+  path === href || path.startsWith(`${href}/`);
+
+const NAV: { href: string; label: string; external?: boolean }[] = [
+  { href: "/projects", label: nav.projectsLabel || "Projects" },
+  { href: "/available", label: nav.availableLabel || "Available Works/Prints" },
+  ...(nav.showPublications ? [{ href: "/publications", label: "Publications" }] : []),
+  ...(nav.showNews ? [{ href: "/news", label: "News" }] : []),
+  { href: "/about", label: nav.aboutLabel || "Biography" },
+  { href: "/contact", label: nav.contactLabel || "Contact" },
+  ...extraLinks.map((l) => ({
+    href: l.href,
+    label: l.label,
+    external: !l.href.startsWith("/"),
+  })),
+];
+
+const linkCls = (href: string) =>
+  [
+    "font-display uppercase transition-colors text-label-caps whitespace-nowrap lg:py-2",
+    !href.startsWith("/") || href.startsWith("http")
+      ? "text-on-surface-variant hover:text-primary"
+      : isActive(href)
+        ? "text-primary font-bold"
+        : "text-on-surface-variant hover:text-primary",
+  ].join(" ");
+---
+<aside class="fixed top-0 left-0 z-50 w-full h-16 lg:h-screen lg:w-[248px] bg-background/95 backdrop-blur-md border-b lg:border-b-0 lg:border-r border-structural-gray flex items-center justify-between lg:flex-col px-edge-margin-mobile lg:px-0">
+  <!-- Brand -->
+  <div class="lg:px-gutter lg:pt-gutter flex items-center lg:block">
+    <a href="/" class="block">
+      <span class="font-display text-[18px] lg:text-[22px] leading-none tracking-tight text-primary whitespace-nowrap uppercase">
+        George Geranios
+      </span>
+    </a>
+  </div>
+
+  <!-- Desktop nav -->
+  <nav class="hidden lg:flex lg:flex-col lg:items-stretch lg:gap-0 lg:px-gutter lg:mt-6">
+    {NAV.map((n) =>
+      n.external ? (
+        <a href={n.href} target="_blank" rel="noopener noreferrer" class={linkCls(n.href)}>
+          {n.label}
+        </a>
+      ) : (
+        <a href={n.href} class={linkCls(n.href)} aria-current={isActive(n.href) ? "page" : undefined}>
+          {n.label}
+        </a>
+      ),
+    )}
+    <div class="lg:py-2 lg:self-start">
+      <ModeToggle />
+    </div>
+  </nav>
+
+  <!-- Desktop footer -->
+  {(contactEmail || contactInstagramUrl) && (
+    <div class="hidden lg:block px-gutter lg:mt-auto lg:pb-gutter">
+      <div class="border-t border-structural-gray pt-gutter space-y-1">
+        {contactEmail && (
+          <a href={`mailto:${contactEmail}`} class="block font-body text-caption text-on-surface-variant hover:text-primary">
+            {contactEmail}
+          </a>
+        )}
+        {contactInstagramUrl && (
+          <a href={contactInstagramUrl} target="_blank" rel="noopener noreferrer" class="block font-body text-caption text-on-surface-variant hover:text-primary">
+            Instagram
+          </a>
+        )}
+      </div>
+    </div>
+  )}
+
+  <!-- Mobile hamburger -->
+  <button
+    type="button"
+    data-menu-open
+    aria-label="Open menu"
+    aria-expanded="false"
+    aria-controls="mobile-menu"
+    class="lg:hidden text-on-surface-variant hover:text-primary p-2"
+  >
+    <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <line x1="4" x2="20" y1="6" y2="6"></line><line x1="4" x2="20" y1="12" y2="12"></line><line x1="4" x2="20" y1="18" y2="18"></line>
+    </svg>
+  </button>
+</aside>
+
+<!-- Mobile overlay menu -->
+<div
+  id="mobile-menu"
+  data-menu-overlay
+  aria-hidden="true"
+  inert
+  class="lg:hidden fixed inset-0 z-[60] bg-background flex flex-col transition-all duration-200 opacity-0 -translate-y-2 pointer-events-none"
+>
+  <!-- Top row: brand + close -->
+  <div class="flex items-center justify-between h-16 px-edge-margin-mobile border-b border-structural-gray shrink-0">
+    <a href="/" class="block">
+      <span class="font-display text-[18px] leading-none tracking-tight text-primary whitespace-nowrap uppercase">
+        George Geranios
+      </span>
+    </a>
+    <button
+      type="button"
+      data-menu-close
+      aria-label="Close menu"
+      class="text-on-surface-variant hover:text-primary p-2"
+    >
+      <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M18 6 6 18"></path><path d="m6 6 12 12"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Nav links -->
+  <nav class="flex-1 flex flex-col justify-center gap-gutter px-edge-margin-mobile">
+    {NAV.map((n) =>
+      n.external ? (
+        <a
+          href={n.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="font-display text-2xl uppercase tracking-tight py-1 transition-colors text-on-surface-variant hover:text-primary"
+        >
+          {n.label}
+        </a>
+      ) : (
+        <a
+          href={n.href}
+          class:list={[
+            "font-display text-2xl uppercase tracking-tight py-1 transition-colors",
+            isActive(n.href) ? "text-primary" : "text-on-surface-variant hover:text-primary",
+          ]}
+        >
+          {n.label}
+        </a>
+      ),
+    )}
+  </nav>
+
+  <!-- Footer: theme + contact -->
+  <div class="px-edge-margin-mobile py-gutter border-t border-structural-gray flex items-center justify-between shrink-0">
+    <ModeToggle />
+    {(contactEmail || contactInstagramUrl) && (
+      <div class="flex flex-col items-end gap-1 font-body text-caption text-on-surface-variant">
+        {contactEmail && (
+          <a href={`mailto:${contactEmail}`} class="hover:text-primary">
+            {contactEmail}
+          </a>
+        )}
+        {contactInstagramUrl && (
+          <a href={contactInstagramUrl} target="_blank" rel="noopener noreferrer" class="hover:text-primary">
+            Instagram
+          </a>
+        )}
+      </div>
+    )}
+  </div>
+</div>
+
+<script>
+  // Mobile menu — open/close with focus management. The overlay starts
+  // `inert` server-side (its links are out of the tab order when closed).
+  // Listeners are delegated on `document` (like the theme toggle in
+  // BaseLayout) so they survive ClientRouter page swaps: a swap replaces
+  // these DOM nodes, and this module only executes once per full load.
+  function setOpen(open: boolean) {
+    const overlay = document.querySelector<HTMLElement>("[data-menu-overlay]");
+    const openBtn = document.querySelector<HTMLButtonElement>("[data-menu-open]");
+    if (!overlay || !openBtn) return;
+    overlay.classList.toggle("opacity-0", !open);
+    overlay.classList.toggle("-translate-y-2", !open);
+    overlay.classList.toggle("pointer-events-none", !open);
+    overlay.toggleAttribute("inert", !open);
+    overlay.setAttribute("aria-hidden", String(!open));
+    openBtn.setAttribute("aria-expanded", String(open));
+    if (open) {
+      overlay.querySelector("a")?.focus();
+    } else {
+      openBtn.focus();
+    }
+  }
+
+  const menuIsOpen = () =>
+    !document.querySelector("[data-menu-overlay]")?.hasAttribute("inert");
+
+  document.addEventListener("click", (e) => {
+    const el = e.target as HTMLElement;
+    if (el.closest("[data-menu-open]")) setOpen(true);
+    else if (el.closest("[data-menu-close]")) setOpen(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && menuIsOpen()) setOpen(false);
+  });
+</script>

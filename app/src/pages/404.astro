@@ -1,0 +1,29 @@
+---
+/**
+ * Styled 404 (the source used the default Next error UI). Served by the
+ * Worker for any unmatched route, and targeted by Astro.rewrite("/404")
+ * from the detail pages.
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+---
+<BaseLayout title="Page Not Found">
+  <section class="px-edge-margin-mobile lg:px-edge-margin-desktop py-section-gap">
+    <div class="max-w-[1440px] mx-auto min-h-[50vh] flex flex-col items-start justify-center gap-6">
+      <span class="font-display text-label-caps uppercase text-on-surface-variant">
+        Error 404
+      </span>
+      <h1 class="font-display text-display-xl-mobile lg:text-display-xl uppercase leading-none">
+        Page not found
+      </h1>
+      <p class="font-body text-body-lg text-on-surface-variant max-w-md">
+        The page you are looking for doesn't exist or may have moved.
+      </p>
+      <a
+        href="/"
+        class="font-display text-label-caps uppercase text-primary hover:underline inline-flex items-center gap-1"
+      >
+        ← Back to the works
+      </a>
+    </div>
+  </section>
+</BaseLayout>

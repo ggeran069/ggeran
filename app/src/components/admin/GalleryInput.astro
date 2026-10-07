@@ -1,0 +1,66 @@
+---
+/**
+ * Multiple images, uploaded in ONE batched POST /api/upload (per-file errors
+ * come back in the response). Carried as repeated hidden inputs named `name`
+ * so formData.getAll(name) returns the URL array. Behavior in
+ * src/scripts/admin-uploads.ts.
+ */
+import { ACCEPT_ATTR, UPLOAD_NOTE, UPLOAD_RECOMMENDATION, MAX_GALLERY_IMAGES } from "@/lib/upload";
+
+interface Props {
+  name: string;
+  label: string;
+  defaultValue?: string[];
+  note?: string;
+  maxItems?: number;
+}
+const { name, label, defaultValue = [], note, maxItems = MAX_GALLERY_IMAGES } = Astro.props;
+---
+<div data-gallery-input data-name={name} data-max={maxItems}>
+  <span class="label">{label}</span>
+  {note && <p class="text-xs text-on-surface-variant">{note}</p>}
+
+  <div data-rows>
+    {defaultValue.map((u) => (
+      <div class="flex items-center gap-gutter" data-row>
+        <input type="hidden" name={name} value={u} />
+        <img
+          src={u}
+          alt=""
+          width="120"
+          height="90"
+          class="w-24 h-auto border border-structural-gray"
+        />
+        <input class="input flex-1" value={u} data-url-text />
+        <button type="button" class="btn btn-outline btn-sm" data-remove-row>Remove</button>
+      </div>
+    ))}
+  </div>
+
+  <div class="flex items-center gap-gutter">
+    <input type="file" accept={ACCEPT_ATTR} multiple data-file class="sr-only" />
+    <button type="button" class="btn btn-outline btn-sm" data-browse disabled={defaultValue.length >= maxItems}>
+      <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 8 5-5 5 5"></path>
+      </svg>
+      Add images
+    </button>
+    <span class="font-body text-caption text-on-surface-variant" data-counter>
+      {defaultValue.length} / {maxItems}
+    </span>
+  </div>
+
+  <p class="text-xs text-on-surface-variant">{UPLOAD_NOTE}</p>
+  <p class="text-xs text-on-surface-variant">{UPLOAD_RECOMMENDATION}</p>
+  {defaultValue.length >= maxItems && (
+    <p class="text-sm text-on-surface-variant">
+      Gallery limit reached ({maxItems} images).
+    </p>
+  )}
+  <p data-error class="text-sm text-destructive hidden"></p>
+</div>
+
+<script>
+  import { initAdminUploads } from "@/scripts/admin-uploads";
+  initAdminUploads();
+</script>

@@ -1,0 +1,119 @@
+---
+/**
+ * Gallery grid + watermarked lightbox, ported from gallery.tsx.
+ * The overlay is a NATIVE <dialog> ( showModal() gives focus trap, Escape
+ * handling and scroll lock for free — the React version re-implemented all
+ * three). Deterrents kept: repeating watermark, contextmenu/drag prevention.
+ */
+interface Props {
+  images: string[];
+  altPrefix?: string;
+}
+
+const { images, altPrefix = "Image" } = Astro.props;
+---
+<div data-gallery data-gallery-alt={altPrefix} class="space-y-gutter">
+  {images.map((src, i) => (
+    <button
+      type="button"
+      data-idx={i}
+      aria-label={`Enlarge image ${i + 1}`}
+      class="group block w-full bg-surface-container overflow-hidden cursor-zoom-in"
+    >
+      <img
+        src={src}
+        alt={`${altPrefix} ${i + 1}`}
+        width="1600"
+        height="1000"
+        loading="lazy"
+        decoding="async"
+        class="w-full h-auto transition-transform duration-700 group-hover:scale-[1.01]"
+      />
+    </button>
+  ))}
+</div>
+
+<dialog class="lightbox" data-lightbox>
+  <button type="button" data-close aria-label="Close" class="absolute top-6 right-6 text-white text-3xl leading-none px-2 hover:opacity-70">
+    ✕
+  </button>
+  <button type="button" data-prev aria-label="Previous" class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:opacity-70">
+    ‹
+  </button>
+  <button type="button" data-next aria-label="Next" class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:opacity-70">
+    ›
+  </button>
+  <div class="lightbox__frame" data-frame>
+    <img
+      data-lightbox-img
+      alt=""
+      draggable="false"
+      class="lightbox__img max-w-[90vw] max-h-[86vh] w-auto h-auto object-contain"
+    />
+    <div class="lightbox__watermark" aria-hidden="true"></div>
+  </div>
+</dialog>
+
+<script type="application/json" data-gallery-images set:html={JSON.stringify(images)} />
+
+<script>
+  // astro:page-load fires on full loads AND after every ClientRouter swap;
+  // this module executes only once per full load, so re-binding inside the
+  // event is what keeps the lightbox alive across soft navigations (each
+  // swap brings fresh DOM nodes — no double-binding risk). Pages without a
+  // gallery no-op via the root check.
+  document.addEventListener("astro:page-load", () => {
+    const root = document.querySelector("[data-gallery]");
+    const dialog = document.querySelector<HTMLDialogElement>("[data-lightbox]");
+    const img = dialog?.querySelector<HTMLImageElement>("[data-lightbox-img]");
+    const frame = dialog?.querySelector<HTMLElement>("[data-frame]");
+    let images: string[] = [];
+    let altPrefix = "Image";
+    let idx = 0;
+
+    try {
+      images = JSON.parse(
+        document.querySelector<HTMLScriptElement>("[data-gallery-images]")?.textContent ?? "[]",
+      );
+      altPrefix = root?.getAttribute("data-gallery-alt") ?? altPrefix;
+    } catch {}
+
+    const show = (i: number) => {
+      if (!img || !images.length) return;
+      idx = (i + images.length) % images.length;
+      img.src = images[idx];
+      img.alt = `${altPrefix} ${idx + 1}`;
+    };
+
+    root?.addEventListener("click", (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLElement>("[data-idx]");
+      if (!btn || !dialog) return;
+      show(Number(btn.dataset.idx));
+      dialog.showModal();
+    });
+
+    dialog?.addEventListener("click", (e) => {
+      // Click on the backdrop (outside the frame) closes.
+      if (frame && !frame.contains(e.target as Node) && !(e.target as HTMLElement).closest("button")) {
+        dialog.close();
+      }
+    });
+    dialog?.addEventListener("close", () => {
+      if (img) img.src = "";
+    });
+
+    const nav = (dir: number) => show(idx + dir);
+    dialog?.querySelector("[data-close]")?.addEventListener("click", () => dialog.close());
+    dialog?.querySelector("[data-prev]")?.addEventListener("click", () => nav(-1));
+    dialog?.querySelector("[data-next]")?.addEventListener("click", () => nav(1));
+    // Arrow keys when the dialog is open (Escape + focus trap are native).
+    dialog?.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") nav(-1);
+      if (e.key === "ArrowRight") nav(1);
+    });
+
+    // Download friction (deterrent only).
+    frame?.addEventListener("contextmenu", (e) => e.preventDefault());
+    dialog?.querySelector("[data-lightbox-img]")?.addEventListener("dragstart", (e) => e.preventDefault());
+  });
+</script>

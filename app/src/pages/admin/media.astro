@@ -1,0 +1,78 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminHeader from "@/components/admin/AdminHeader.astro";
+import StorageMeter from "@/components/admin/StorageMeter.astro";
+import { listAllMedia, getMediaUsage, formatMB, quotaMb } from "@/lib/media";
+import { getReferencedImageUrls } from "@/lib/data";
+import { getEnv } from "@/lib/env";
+import { actions } from "astro:actions";
+
+const [items, usage, referenced] = await Promise.all([
+  listAllMedia(Astro.locals),
+  getMediaUsage(Astro.locals),
+  getReferencedImageUrls(Astro.locals),
+]);
+const quota = quotaMb(getEnv(Astro.locals));
+
+const delError = Astro.getActionResult(actions.media.delete)?.error?.message ?? null;
+---
+<AdminLayout title="Media">
+  <div class="px-edge-margin-mobile lg:px-edge-margin-desktop py-gutter">
+    <div class="max-w-[1100px] mx-auto">
+      <AdminHeader title="Media" />
+
+      <div class="mb-section-gap">
+        <StorageMeter usage={usage} quotaMB={quota} />
+      </div>
+
+      {delError && <p class="text-destructive text-sm mb-gutter">{delError}</p>}
+
+      {items === null ? (
+        <p class="font-body text-caption text-on-surface-variant border border-structural-gray p-gutter">
+          Media storage isn't reachable — check the R2 configuration.
+        </p>
+      ) : items.length === 0 ? (
+        <p class="font-body text-body-md text-on-surface-variant">No uploads yet.</p>
+      ) : (
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-gutter">
+          {items.map((m) => {
+            const inUse = referenced.has(m.url);
+            return (
+              <div class="border border-structural-gray flex flex-col">
+                <div class="aspect-[4/3] bg-surface-container overflow-hidden">
+                  <img
+                    src={m.url}
+                    alt={m.key}
+                    loading="lazy"
+                    decoding="async"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div class="p-gutter flex-1 flex flex-col gap-unit">
+                  <div class="font-body text-caption text-on-surface truncate" title={m.key}>
+                    {m.key}
+                  </div>
+                  <div class="font-body text-caption text-on-surface-variant">
+                    {formatMB(m.size)} MB · {m.uploadedAt.toLocaleDateString()}
+                  </div>
+                  <div class="mt-unit">
+                    {inUse ? (
+                      <span class="inline-block font-display text-label-caps uppercase text-on-surface-variant border border-structural-gray px-unit py-1">
+                        In use
+                      </span>
+                    ) : (
+                      <form method="POST" action={actions.media.delete}>
+                        <input type="hidden" name="key" value={m.key} />
+                        <button type="submit" class="btn btn-outline btn-sm">Delete</button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+</AdminLayout>

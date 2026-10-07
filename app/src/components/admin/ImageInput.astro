@@ -1,0 +1,58 @@
+---
+/**
+ * Single image field: upload (→ POST /api/upload, one batched request) or
+ * paste a URL. The resolved URL is carried in a hidden input named `name`.
+ * Vanilla-TS behavior lives in src/scripts/admin-uploads.ts.
+ */
+import { ACCEPT_ATTR, UPLOAD_NOTE, UPLOAD_RECOMMENDATION } from "@/lib/upload";
+
+interface Props {
+  name: string;
+  label: string;
+  defaultValue?: string;
+  note?: string;
+}
+const { name, label, defaultValue = "", note } = Astro.props;
+---
+<div data-image-input>
+  <span class="label">{label}</span>
+  {note && <p class="text-xs text-on-surface-variant">{note}</p>}
+  <input type="hidden" name={name} value={defaultValue} data-url-field />
+
+  <div class="flex items-center gap-gutter">
+    <input type="file" accept={ACCEPT_ATTR} data-file class="sr-only" />
+    <button type="button" class="btn btn-outline btn-sm" data-browse>
+      <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 15V3"></path><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 8 5-5 5 5"></path>
+      </svg>
+      <span data-label>{defaultValue ? "Replace image" : "Upload image"}</span>
+    </button>
+    {defaultValue && (
+      <button type="button" class="btn btn-ghost btn-sm" data-remove>Remove</button>
+    )}
+  </div>
+
+  <p class="text-xs text-on-surface-variant">{UPLOAD_NOTE}</p>
+  <p class="text-xs text-on-surface-variant">{UPLOAD_RECOMMENDATION}</p>
+  <p data-error class="text-sm text-destructive hidden"></p>
+
+  <div data-preview class={defaultValue ? "" : "hidden"}>
+    {defaultValue && (
+      <img
+        src={defaultValue}
+        alt=""
+        width="400"
+        height="300"
+        class="w-48 h-auto border border-structural-gray"
+      />
+    )}
+    {defaultValue && (
+      <input class="input mt-2" data-url-text placeholder="Image URL" value={defaultValue} />
+    )}
+  </div>
+</div>
+
+<script>
+  import { initAdminUploads } from "@/scripts/admin-uploads";
+  initAdminUploads();
+</script>

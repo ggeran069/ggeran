@@ -1,0 +1,37 @@
+{
+  "name": "ggeran",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "db:generate": "drizzle-kit generate",
+    "db:seed-sql": "tsx scripts/seed-sql.ts",
+    "migrate:blob": "tsx scripts/migrate-blob-to-r2.ts"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^14.3.4",
+    "@fontsource/archivo-narrow": "^5.3.0",
+    "@fontsource/hanken-grotesk": "^5.3.0",
+    "astro": "^7.3.6",
+    "aws4fetch": "^1.0.20",
+    "drizzle-orm": "^0.45.2",
+    "jose": "^6.2.8",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^24",
+    "@vercel/blob": "^2.8.0",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.18.1",
+    "tailwindcss": "^4.0.0",
+    "tsx": "^4.23.11",
+    "typescript": "^5",
+    "wrangler": "^4.135.0"
+  }
+}

@@ -1,0 +1,41 @@
+---
+/**
+ * Persistent admin section nav (server-rendered; active state computed from
+ * Astro.url.pathname — no usePathname). Hidden on the login screen.
+ */
+const path = Astro.url.pathname;
+const NAV = [
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/projects", label: "Projects" },
+  { href: "/admin/publications", label: "Publications" },
+  { href: "/admin/news", label: "News" },
+  { href: "/admin/content", label: "Site Content" },
+  { href: "/admin/media", label: "Media" },
+];
+const isActive = (href: string) => path === href || (href !== "/admin" && path.startsWith(`${href}/`));
+---
+{
+  path !== "/admin/login" && (
+    <nav class="sticky top-0 z-40 border-b border-structural-gray bg-background/95 backdrop-blur">
+      <div class="max-w-[1100px] mx-auto flex items-center gap-gutter px-edge-margin-mobile lg:px-gutter py-gutter overflow-x-auto whitespace-nowrap">
+        <span class="font-display text-label-caps uppercase text-on-surface-variant shrink-0">
+          Admin
+        </span>
+        {NAV.map((n) => (
+          <a
+            href={n.href}
+            aria-current={isActive(n.href) ? "page" : undefined}
+            class:list={[
+              "font-display text-label-caps uppercase whitespace-nowrap transition-colors",
+              isActive(n.href)
+                ? "text-primary font-bold"
+                : "text-on-surface-variant hover:text-primary",
+            ]}
+          >
+            {n.label}
+          </a>
+        ))}
+      </div>
+    </nav>
+  )
+}

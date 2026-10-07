@@ -1,0 +1,208 @@
+---
+/**
+ * Filter/sort catalogue (projects + available works). Ported from
+ * catalogue.tsx as server-rendered markup + one vanilla script: every item is
+ * rendered once with data-* attributes, the client only filters (hidden) and
+ * reorders (appendChild). A11y fixes: the period <select> has a real
+ * aria-label, and sort buttons expose aria-pressed.
+ */
+export interface CatalogueItem {
+  href: string;
+  ref: string | null;
+  image: string | null;
+  title: string;
+  subtitle?: string | null;
+  year: number | null;
+  date: string | null;
+  line1?: string | null;
+  line2?: string | null;
+}
+
+interface Props {
+  items: CatalogueItem[];
+  noun?: string;
+}
+
+const { items, noun = "Works" } = Astro.props;
+
+const ERAS = [
+  { value: "all", label: "All Eras" },
+  { value: "1980-1989", label: "1980 — 1989" },
+  { value: "1990-1999", label: "1990 — 1999" },
+  { value: "2000-2010", label: "2000 — 2010" },
+  { value: "2011-Present", label: "2011 — Present" },
+];
+
+function eraOf(year: number | null): string {
+  if (!year) return "Unknown";
+  if (year < 1990) return "1980-1989";
+  if (year < 2000) return "1990-1999";
+  if (year < 2011) return "2000-2010";
+  return "2011-Present";
+}
+---
+<div data-catalogue>
+  <!-- Controls -->
+  <div class="flex flex-wrap gap-8 items-center font-display text-label-caps border-t lg:border-t-0 pt-gutter lg:pt-0 border-structural-gray mb-section-gap">
+    <div class="flex flex-col gap-2">
+      <select
+        data-filter-era
+        aria-label="Filter by period"
+        class="bg-transparent border-none p-0 focus:ring-0 cursor-pointer uppercase text-primary font-bold"
+      >
+        {ERAS.map((o) => (
+          <option value={o.value}>{o.label}</option>
+        ))}
+      </select>
+    </div>
+    <div class="w-px h-8 bg-structural-gray hidden lg:block"></div>
+    <div class="flex flex-col gap-2">
+      <span class="text-on-surface-variant/50">SORT BY</span>
+      <div class="flex gap-4">
+        <button
+          type="button"
+          data-sort="chrono"
+          aria-pressed="true"
+          class="uppercase transition-opacity text-primary"
+        >
+          Chronological
+        </button>
+        <span class="text-structural-gray">/</span>
+        <button
+          type="button"
+          data-sort="ref"
+          aria-pressed="false"
+          class="uppercase transition-colors text-on-surface-variant hover:text-primary"
+        >
+          Reference No.
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- List (all items server-rendered once; JS only filters + reorders) -->
+  <div class="divide-y divide-structural-gray" data-list>
+    {items.map((i) => (
+      <article
+        data-era={eraOf(i.year)}
+        data-year={i.year ?? 0}
+        data-ref={i.ref ?? ""}
+        class="group py-6 md:py-8 grid grid-cols-[6rem_1fr] md:grid-cols-[6rem_8rem_1fr_auto_auto] gap-x-4 md:gap-x-6 items-center w-full -mx-3 px-3 md:-mx-4 md:px-4 hover:bg-surface-container transition-colors duration-200"
+      >
+        <div class="hidden md:block font-display text-label-caps text-on-surface-variant opacity-50 whitespace-nowrap">
+          {i.ref ? `#${i.ref}` : "—"}
+        </div>
+        <div>
+          {i.image && (
+            <a
+              href={i.href}
+              class="block aspect-[4/5] bg-surface-container-low group-hover:bg-surface-container overflow-hidden grayscale hover:grayscale-0 transition-all duration-500"
+            >
+              <img
+                src={i.image}
+                alt={i.title}
+                width="400"
+                height="500"
+                loading="lazy"
+                decoding="async"
+                class="w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-700"
+              />
+            </a>
+          )}
+        </div>
+        <div class="min-w-0">
+          <div class="font-display text-[10px] text-on-surface-variant uppercase mb-1 md:hidden whitespace-nowrap">
+            Ref: {i.ref ? `#${i.ref}` : "—"}
+          </div>
+          <h3 class="font-display text-headline-md text-primary uppercase">
+            <a
+              href={i.href}
+              class="group-hover:translate-x-1 inline-block transition-transform duration-300"
+            >
+              {i.title}
+            </a>
+          </h3>
+          {i.subtitle && (
+            <p class="font-body text-caption text-on-surface-variant mt-1">
+              {i.subtitle}
+            </p>
+          )}
+          <div class="md:hidden mt-2 flex flex-wrap gap-x-gutter gap-y-1 font-body text-caption text-on-surface-variant uppercase">
+            <span>{i.year ?? "—"}</span>
+            {i.line1 && <span>{i.line1}</span>}
+            {i.line2 && <span>{i.line2}</span>}
+          </div>
+        </div>
+        <div class="hidden md:block">
+          <span class="font-display text-label-caps text-primary whitespace-nowrap">
+            {i.year ?? "—"}
+          </span>
+        </div>
+        <div class="hidden md:block md:text-right font-body text-caption text-on-surface-variant leading-relaxed">
+          {i.line1 && <p>{i.line1}</p>}
+          {i.line2 && <p>{i.line2}</p>}
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <div class="mt-section-gap flex flex-col items-center gap-unit">
+    <div class="w-full h-px bg-structural-gray mb-gutter"></div>
+    <span class="font-display text-label-caps text-on-surface-variant" data-counter>
+      SHOWING {items.length} OF {items.length} {noun.toUpperCase()}
+    </span>
+  </div>
+</div>
+
+<script>
+  // Filter (by era attribute) + sort (DOM reorder) + counter.
+  // astro:page-load fires on full loads AND after every ClientRouter swap;
+  // re-binding inside it keeps this working across soft navigations even
+  // though the module itself executes only once per full load (each swap
+  // brings fresh DOM nodes — no double-binding risk).
+  document.addEventListener("astro:page-load", () => {
+    const root = document.querySelector<HTMLElement>("[data-catalogue]");
+    if (!root) return;
+    const eraSel = root.querySelector<HTMLSelectElement>("[data-filter-era]");
+    const sortBtns = root.querySelectorAll<HTMLButtonElement>("[data-sort]");
+    const list = root.querySelector<HTMLElement>("[data-list]")!;
+    const counter = root.querySelector<HTMLElement>("[data-counter]")!;
+    const noun = (counter.textContent?.match(/OF (\d+) (.+)$/)?.[2] ?? "").toLowerCase();
+
+    const apply = () => {
+      const era = eraSel?.value ?? "all";
+      const sort =
+        (root.querySelector<HTMLButtonElement>('[data-sort][aria-pressed="true"]')
+          ?.dataset.sort as "chrono" | "ref") ?? "chrono";
+
+      const articles = Array.from(list.querySelectorAll<HTMLElement>("article"));
+      const visible: HTMLElement[] = [];
+      for (const a of articles) {
+        const show = era === "all" || a.dataset.era === era;
+        a.hidden = !show;
+        if (show) visible.push(a);
+      }
+      visible.sort((a, b) =>
+        sort === "ref"
+          ? (a.dataset.ref ?? "").localeCompare(b.dataset.ref ?? "", undefined, {
+              numeric: true,
+            })
+          : Number(b.dataset.year) - Number(a.dataset.year),
+      );
+      for (const a of visible) list.appendChild(a);
+      counter.textContent = `SHOWING ${visible.length} OF ${articles.length} ${noun.toUpperCase()}`;
+    };
+
+    eraSel?.addEventListener("change", apply);
+    for (const btn of sortBtns) {
+      btn.addEventListener("click", () => {
+        for (const b of sortBtns) {
+          b.setAttribute("aria-pressed", String(b === btn));
+          b.classList.toggle("text-primary", b === btn);
+          b.classList.toggle("text-on-surface-variant", b !== btn);
+        }
+        apply();
+      });
+    }
+  });
+</script>

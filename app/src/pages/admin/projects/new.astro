@@ -1,0 +1,21 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminHeader from "@/components/admin/AdminHeader.astro";
+import { actions } from "astro:actions";
+
+// PRG: the action returned data = success → back to the section list.
+const result = Astro.getActionResult(actions.projects.create);
+if (result?.data) return Astro.redirect("/admin/projects");
+import ProjectForm from "@/components/admin/ProjectForm.astro";
+import { getSiteContent, parseCategoryList } from "@/lib/data";
+
+const site = await getSiteContent(Astro.locals);
+---
+<AdminLayout title="New project">
+  <div class="px-edge-margin-mobile lg:px-edge-margin-desktop py-gutter">
+    <div class="max-w-[1100px] mx-auto">
+      <AdminHeader title="New project" />
+      <ProjectForm mode="create" categories={parseCategoryList(site.projectCategories)} />
+    </div>
+  </div>
+</AdminLayout>

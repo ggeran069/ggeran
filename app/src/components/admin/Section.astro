@@ -1,0 +1,19 @@
+---
+/** Bordered form section header + body (replaces the React Section primitive). */
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description } = Astro.props;
+---
+<section class="border border-structural-gray p-gutter">
+  <header class="mb-gutter">
+    <h2 class="font-display text-label-caps uppercase text-on-surface-variant">{title}</h2>
+    {description && (
+      <p class="font-body text-caption text-on-surface-variant mt-1">{description}</p>
+    )}
+  </header>
+  <div class="space-y-4">
+    <slot />
+  </div>
+</section>

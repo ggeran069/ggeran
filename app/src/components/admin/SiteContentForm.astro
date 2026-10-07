@@ -1,0 +1,126 @@
+---
+/** Singleton site-content form — plain HTML → actions.content.save. */
+import { actions } from "astro:actions";
+import Field from "@/components/admin/Field.astro";
+import Section from "@/components/admin/Section.astro";
+import SubmitBar from "@/components/admin/SubmitBar.astro";
+import ImageInput from "@/components/admin/ImageInput.astro";
+import type { SiteContent } from "@/db/seed-data";
+
+interface Props {
+  defaults: SiteContent;
+  disabled?: boolean;
+}
+const { defaults, disabled } = Astro.props;
+
+const result = Astro.getActionResult(actions.content.save);
+const error = result?.error?.message ?? null;
+---
+<form method="POST" action={actions.content.save} class="space-y-6 max-w-2xl" aria-disabled={disabled}>
+  <Section title="Contact" description="Email and Instagram also appear in the site sidebar.">
+    <Field label="Intro line">
+      <input class="input" name="contactIntro" value={defaults.contactIntro ?? ""} />
+    </Field>
+    <Field label="Studio email">
+      <input class="input" name="contactEmail" type="email" value={defaults.contactEmail ?? ""} />
+    </Field>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+      <Field label="Instagram handle">
+        <input class="input" name="contactInstagramHandle" value={defaults.contactInstagramHandle ?? ""} />
+      </Field>
+      <Field label="Instagram URL">
+        <input class="input" name="contactInstagramUrl" value={defaults.contactInstagramUrl ?? ""} />
+      </Field>
+    </div>
+  </Section>
+
+  <Section title="Biography">
+    <ImageInput
+      name="aboutPortrait"
+      label="Portrait image"
+      defaultValue={defaults.aboutPortrait ?? ""}
+      note="Shown at the top of the Biography page."
+    />
+    <Field label="Bio" hint="Separate paragraphs with a blank line.">
+      <textarea class="textarea" name="aboutBio" rows="8">{defaults.aboutBio ?? ""}</textarea>
+    </Field>
+    <Field label="Exhibitions" hint="One per line.">
+      <textarea class="textarea" name="aboutExhibitions" rows="5">{defaults.aboutExhibitions ?? ""}</textarea>
+    </Field>
+  </Section>
+
+  <Section title="Available Works">
+    <Field label="Heading">
+      <input class="input" name="availableHeading" value={defaults.availableHeading ?? ""} />
+    </Field>
+    <Field label="Intro / footer line">
+      <textarea class="textarea" name="availableIntro" rows="3">{defaults.availableIntro ?? ""}</textarea>
+    </Field>
+  </Section>
+
+  <Section
+    title="Home hero"
+    description="Optional. Hero images come from Projects marked Featured. Leave blank to show the featured project's title and year."
+  >
+    <Field label="Hero title (overrides project title)">
+      <input class="input" name="heroTitle" value={defaults.heroTitle ?? ""} />
+    </Field>
+    <Field label="Hero subtitle">
+      <input class="input" name="heroSubtitle" value={defaults.heroSubtitle ?? ""} />
+    </Field>
+  </Section>
+
+  <Section
+    title="Navigation"
+    description="Labels shown in the site sidebar and mobile menu. Leave blank to use the default."
+  >
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+      <Field label="Projects label">
+        <input class="input" name="navProjectsLabel" value={defaults.navProjectsLabel ?? ""} placeholder="Projects" />
+      </Field>
+      <Field label="Available Works label">
+        <input class="input" name="navAvailableLabel" value={defaults.navAvailableLabel ?? ""} placeholder="Available Works/Prints" />
+      </Field>
+      <Field label="Biography label">
+        <input class="input" name="navAboutLabel" value={defaults.navAboutLabel ?? ""} placeholder="Biography" />
+      </Field>
+      <Field label="Contact label">
+        <input class="input" name="navContactLabel" value={defaults.navContactLabel ?? ""} placeholder="Contact" />
+      </Field>
+    </div>
+    <label class="flex items-center gap-unit">
+      <input type="checkbox" name="navShowPublications" checked={!!defaults.navShowPublications} class="h-4 w-4" />
+      <span class="text-sm">Show Publications in the menu</span>
+    </label>
+    <label class="flex items-center gap-unit">
+      <input type="checkbox" name="navShowNews" checked={!!defaults.navShowNews} class="h-4 w-4" />
+      <span class="text-sm">Show News in the menu</span>
+    </label>
+    <Field
+      label="Extra links"
+      hint="One per line — Label | destination. Use /path for a site page or https://… for an external link. Shown at the end of the menu."
+    >
+      <textarea
+        class="textarea"
+        name="navExtraLinks"
+        rows="3"
+        placeholder={"Press | https://example.com\nAbout | /about"}>{defaults.navExtraLinks ?? ""}</textarea>
+    </Field>
+  </Section>
+
+  <Section
+    title="Project categories"
+    description="One per line. These become the Category dropdown options when editing a Project."
+  >
+    <Field label="Categories">
+      <textarea
+        class="textarea"
+        name="projectCategories"
+        rows="5"
+        placeholder={"Architecture\nLandscape\nMusic\nSeries"}>{defaults.projectCategories ?? ""}</textarea>
+    </Field>
+  </Section>
+
+  {error && <p class="text-destructive text-sm">{error}</p>}
+  <SubmitBar cancelHref="/admin" />
+</form>

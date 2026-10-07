@@ -1,0 +1,35 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Catalogue, { type CatalogueItem } from "@/components/site/Catalogue.astro";
+import { getPublications } from "@/lib/data";
+
+const publications = await getPublications(Astro.locals);
+const items: CatalogueItem[] = publications.map((p) => ({
+  href: `/publications/${p.slug}`,
+  ref: p.ref,
+  image: p.image,
+  title: p.title,
+  subtitle: p.publisher,
+  year: p.year,
+  date: p.date,
+  line1: p.publisher,
+  line2: p.pages,
+}));
+---
+<BaseLayout title="Publications">
+  <section class="px-edge-margin-mobile lg:px-edge-margin-desktop py-section-gap border-b border-structural-gray">
+    <div class="max-w-[1440px] mx-auto">
+      <span class="font-display text-label-caps text-on-surface-variant mb-4 block">
+        PUBLICATIONS / CATALOGUE
+      </span>
+      <h1 class="font-display text-display-xl-mobile lg:text-display-xl uppercase leading-none">
+        Publications
+      </h1>
+    </div>
+  </section>
+  <section class="px-edge-margin-mobile lg:px-edge-margin-desktop py-section-gap bg-background">
+    <div class="max-w-[1440px] mx-auto">
+      <Catalogue items={items} noun="Publications" />
+    </div>
+  </section>
+</BaseLayout>

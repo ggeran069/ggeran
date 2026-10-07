@@ -1,0 +1,75 @@
+---
+/**
+ * Full-screen hero showing one random featured project. The random pick
+ * happens SERVER-SIDE per request (the source swapped it in via useEffect,
+ * which flashed projects[0] and caused a hydration delta).
+ *
+ * Never blank: if no project qualifies, a static hero block renders with the
+ * CMS hero title (or the artist name) — the source returned null → white page.
+ */
+interface HeroProject {
+  slug: string;
+  title: string;
+  year: number | null;
+  image: string;
+}
+
+interface Props {
+  project: HeroProject | null;
+  heroTitle?: string | null;
+  heroSubtitle?: string | null;
+}
+
+const { project, heroTitle, heroSubtitle } = Astro.props;
+---
+{
+  project ? (
+    <section class="relative w-full h-[calc(100vh-4rem)] lg:h-screen overflow-hidden bg-primary">
+      <a href={`/projects/${project.slug}`} class="block w-full h-full">
+        <img
+          src={project.image}
+          alt={project.title}
+          class="absolute inset-0 w-full h-full object-cover"
+          fetchpriority="high"
+          decoding="async"
+        />
+      </a>
+      <div class="pointer-events-none absolute bottom-0 inset-x-0 px-edge-margin-mobile lg:px-gutter pb-gutter pt-24 bg-linear-to-t from-black/70 to-transparent">
+        {heroTitle ? (
+          <>
+            <span class="block font-display text-headline-md text-white uppercase">
+              {heroTitle}
+            </span>
+            {heroSubtitle && (
+              <span class="block font-body text-body-md text-white/80">
+                {heroSubtitle}
+              </span>
+            )}
+          </>
+        ) : (
+          <>
+            <span class="font-display text-label-caps text-white/80 uppercase">
+              {project.year ?? ""}
+            </span>
+            <span class="block font-display text-headline-md text-white uppercase">
+              {project.title}
+            </span>
+          </>
+        )}
+      </div>
+    </section>
+  ) : (
+    <section class="w-full h-[calc(100vh-4rem)] lg:h-screen bg-primary flex items-center justify-center px-edge-margin-mobile lg:px-gutter">
+      <div class="text-center">
+        <span class="block font-display text-display-xl-mobile lg:text-display-xl text-on-primary uppercase leading-none">
+          {heroTitle || "George Geranios"}
+        </span>
+        {heroSubtitle && (
+          <span class="block mt-4 font-body text-body-lg text-on-primary/80">
+            {heroSubtitle}
+          </span>
+        )}
+      </div>
+    </section>
+  )
+}

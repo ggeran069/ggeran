@@ -1,0 +1,114 @@
+---
+/** Publication create/edit form — plain HTML → Astro Action. */
+import { actions } from "astro:actions";
+import Field from "@/components/admin/Field.astro";
+import Section from "@/components/admin/Section.astro";
+import SubmitBar from "@/components/admin/SubmitBar.astro";
+import ImageInput from "@/components/admin/ImageInput.astro";
+import GalleryInput from "@/components/admin/GalleryInput.astro";
+
+interface Props {
+  mode: "create" | "update";
+  defaults?: {
+    id?: number;
+    title?: string | null;
+    slug?: string | null;
+    year?: number | null;
+    date?: string | null;
+    ref?: string | null;
+    category?: string | null;
+    publisher?: string | null;
+    author?: string | null;
+    isbn?: string | null;
+    pages?: string | null;
+    format?: string | null;
+    edition?: string | null;
+    image?: string | null;
+    gallery?: string[] | null;
+    body?: string | null;
+  };
+  categories?: string[];
+}
+
+const { mode, defaults = {}, categories = [] } = Astro.props;
+const currentCat = defaults.category ?? "";
+const extraCats = currentCat && !categories.includes(currentCat) ? [currentCat] : [];
+
+const action = mode === "update" ? actions.publications.update : actions.publications.create;
+const result = Astro.getActionResult(action);
+const error = result?.error?.message ?? null;
+---
+<form method="POST" action={action} class="space-y-6 max-w-2xl">
+  {defaults.id !== undefined && <input type="hidden" name="id" value={defaults.id} />}
+
+  <Section title="Basics">
+    <Field label="Title" required>
+      <input class="input" name="title" value={defaults.title ?? ""} required />
+    </Field>
+    <Field label="Slug" hint="Leave blank to auto-generate from the title.">
+      <input class="input" name="slug" value={defaults.slug ?? ""} />
+    </Field>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+      <Field label="Year">
+        <input class="input" name="year" type="number" value={defaults.year ?? ""} />
+      </Field>
+      <Field label="Date">
+        <input class="input" name="date" type="date" value={defaults.date ?? ""} />
+      </Field>
+    </div>
+  </Section>
+
+  <Section title="Publication details">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+      <Field label="Publisher">
+        <input class="input" name="publisher" value={defaults.publisher ?? ""} />
+      </Field>
+      <Field label="Author">
+        <input class="input" name="author" value={defaults.author ?? ""} />
+      </Field>
+      <Field label="ISBN">
+        <input class="input" name="isbn" value={defaults.isbn ?? ""} />
+      </Field>
+      <Field label="Pages">
+        <input class="input" name="pages" value={defaults.pages ?? ""} />
+      </Field>
+      <Field label="Format">
+        <input class="input" name="format" value={defaults.format ?? ""} />
+      </Field>
+      <Field label="Edition">
+        <input class="input" name="edition" value={defaults.edition ?? ""} />
+      </Field>
+      <Field label="Reference">
+        <input class="input" name="ref" value={defaults.ref ?? ""} />
+      </Field>
+      <Field label="Category">
+        {categories.length > 0 ? (
+          <select name="category" class="w-full bg-background border border-input h-10 px-3">
+            <option value="">—</option>
+            {[...extraCats, ...categories].map((c) => (
+              <option value={c} selected={c === currentCat}>{c}</option>
+            ))}
+          </select>
+        ) : (
+          <input class="input" name="category" value={currentCat} />
+        )}
+      </Field>
+    </div>
+  </Section>
+
+  <Section title="Images">
+    <ImageInput name="image" label="Cover image" defaultValue={defaults.image ?? ""} />
+    <GalleryInput
+      name="gallery"
+      label="Gallery images"
+      defaultValue={defaults.gallery ?? []}
+    />
+  </Section>
+
+  <Section title="Description" description="Separate paragraphs with a blank line.">
+    <textarea class="textarea" name="body" rows="6">{defaults.body ?? ""}</textarea>
+  </Section>
+
+  {error && <p class="text-destructive text-sm">{error}</p>}
+  <SubmitBar cancelHref="/admin/publications" />
+</form>

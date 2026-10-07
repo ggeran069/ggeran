@@ -1,0 +1,158 @@
+---
+/**
+ * Project create/edit form — plain HTML posting to an Astro Action
+ * (progressive enhancement, no client framework). Error rendering comes from
+ * Astro.getActionResult in this component (same request as the POST render).
+ */
+import { actions } from "astro:actions";
+import Field from "@/components/admin/Field.astro";
+import Section from "@/components/admin/Section.astro";
+import SubmitBar from "@/components/admin/SubmitBar.astro";
+import ImageInput from "@/components/admin/ImageInput.astro";
+import GalleryInput from "@/components/admin/GalleryInput.astro";
+
+interface Props {
+  mode: "create" | "update";
+  defaults?: {
+    id?: number;
+    title?: string | null;
+    slug?: string | null;
+    year?: number | null;
+    date?: string | null;
+    ref?: string | null;
+    category?: string | null;
+    location?: string | null;
+    medium?: string | null;
+    dimensions?: string | null;
+    edition?: string | null;
+    availability?: string | null;
+    series?: string | null;
+    featured?: boolean | null;
+    weight?: number | null;
+    image?: string | null;
+    gallery?: string[] | null;
+    body?: string | null;
+  };
+  categories?: string[];
+}
+
+const { mode, defaults = {}, categories = [] } = Astro.props;
+const currentCat = defaults.category ?? "";
+const extraCats = currentCat && !categories.includes(currentCat) ? [currentCat] : [];
+const AVAIL = ["for-sale", "sold", "reserved", "not-for-sale"];
+
+const action = mode === "update" ? actions.projects.update : actions.projects.create;
+const result = Astro.getActionResult(action);
+const error = result?.error?.message ?? null;
+---
+<form method="POST" action={action} class="space-y-6 max-w-2xl">
+  {defaults.id !== undefined && <input type="hidden" name="id" value={defaults.id} />}
+
+  <Section title="Basics">
+    <Field label="Title" required>
+      <input class="input" name="title" value={defaults.title ?? ""} required />
+    </Field>
+    <Field label="Slug" hint="Leave blank to auto-generate from the title.">
+      <input class="input" name="slug" value={defaults.slug ?? ""} placeholder="the-grid" />
+    </Field>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+      <Field label="Year">
+        <input class="input" name="year" type="number" value={defaults.year ?? ""} />
+      </Field>
+      <Field label="Date">
+        <input class="input" name="date" type="date" value={defaults.date ?? ""} />
+      </Field>
+    </div>
+  </Section>
+
+  <Section title="Classification">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+      <Field
+        label="Category"
+        hint={categories.length
+          ? "Options are defined in Site Content."
+          : "Free text — define options in Site Content."}
+      >
+        {categories.length > 0 ? (
+          <select name="category" class="w-full bg-background border border-input h-10 px-3">
+            <option value="">—</option>
+            {[...extraCats, ...categories].map((c) => (
+              <option value={c} selected={c === currentCat}>{c}</option>
+            ))}
+          </select>
+        ) : (
+          <input class="input" name="category" value={currentCat} />
+        )}
+      </Field>
+      <Field label="Series">
+        <input class="input" name="series" value={defaults.series ?? ""} />
+      </Field>
+    </div>
+    <Field label="Reference">
+      <input class="input" name="ref" value={defaults.ref ?? ""} />
+    </Field>
+  </Section>
+
+  <Section title="Physical">
+    <Field label="Location">
+      <input class="input" name="location" value={defaults.location ?? ""} />
+    </Field>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter">
+      <Field label="Medium">
+        <input class="input" name="medium" value={defaults.medium ?? ""} />
+      </Field>
+      <Field label="Dimensions">
+        <input class="input" name="dimensions" value={defaults.dimensions ?? ""} />
+      </Field>
+    </div>
+    <Field label="Edition">
+      <input class="input" name="edition" value={defaults.edition ?? ""} />
+    </Field>
+  </Section>
+
+  <Section title="Display & availability">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-gutter items-end">
+      <Field label="Availability">
+        <select
+          name="availability"
+          class="w-full bg-background border border-input h-10 px-3"
+        >
+          {AVAIL.map((a) => (
+            <option value={a} selected={(defaults.availability ?? "not-for-sale") === a}>
+              {a}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label="Weight" hint="Higher sorts first, then by year (newest first).">
+        <input class="input" name="weight" type="number" value={defaults.weight ?? 1} />
+      </Field>
+    </div>
+    <label class="flex items-center gap-unit">
+      <input type="checkbox" name="featured" checked={!!defaults.featured} class="h-4 w-4" />
+      <span class="text-sm">Featured — shown on the home hero</span>
+    </label>
+  </Section>
+
+  <Section title="Images">
+    <ImageInput
+      name="image"
+      label="Cover image"
+      defaultValue={defaults.image ?? ""}
+      note="Shown on the home page when the project is marked Featured, and as the main image on the project page."
+    />
+    <GalleryInput
+      name="gallery"
+      label="Gallery images"
+      defaultValue={defaults.gallery ?? []}
+      note="Extra photos shown in the project's lightbox."
+    />
+  </Section>
+
+  <Section title="Description" description="Separate paragraphs with a blank line.">
+    <textarea class="textarea" name="body" rows="6">{defaults.body ?? ""}</textarea>
+  </Section>
+
+  {error && <p class="text-destructive text-sm">{error}</p>}
+  <SubmitBar cancelHref="/admin/projects" />
+</form>

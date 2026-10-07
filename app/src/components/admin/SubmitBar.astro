@@ -1,0 +1,13 @@
+---
+/** Save/Cancel bar for admin forms (no-JS pending state is omitted — the
+ *  form works fine without it; JS enhancement can be added later if needed). */
+interface Props {
+  cancelHref: string;
+  submitLabel?: string;
+}
+const { cancelHref, submitLabel = "Save" } = Astro.props;
+---
+<div class="flex gap-gutter border-t border-structural-gray pt-gutter">
+  <button type="submit" class="btn btn-primary">{submitLabel}</button>
+  <a href={cancelHref} class="btn btn-outline">Cancel</a>
+</div>

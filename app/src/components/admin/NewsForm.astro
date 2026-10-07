@@ -1,0 +1,56 @@
+---
+/** News create/edit form — plain HTML → Astro Action. */
+import { actions } from "astro:actions";
+import Field from "@/components/admin/Field.astro";
+import Section from "@/components/admin/Section.astro";
+import SubmitBar from "@/components/admin/SubmitBar.astro";
+import ImageInput from "@/components/admin/ImageInput.astro";
+
+interface Props {
+  mode: "create" | "update";
+  defaults?: {
+    id?: number;
+    title?: string | null;
+    slug?: string | null;
+    date?: string | null;
+    summary?: string | null;
+    image?: string | null;
+    body?: string | null;
+  };
+}
+
+const { mode, defaults = {} } = Astro.props;
+
+const action = mode === "update" ? actions.news.update : actions.news.create;
+const result = Astro.getActionResult(action);
+const error = result?.error?.message ?? null;
+---
+<form method="POST" action={action} class="space-y-6 max-w-2xl">
+  {defaults.id !== undefined && <input type="hidden" name="id" value={defaults.id} />}
+
+  <Section title="News item">
+    <Field label="Title" required>
+      <input class="input" name="title" value={defaults.title ?? ""} required />
+    </Field>
+    <Field label="Slug" hint="Leave blank to auto-generate from the title.">
+      <input class="input" name="slug" value={defaults.slug ?? ""} />
+    </Field>
+    <Field label="Date">
+      <input class="input" name="date" type="date" value={defaults.date ?? ""} />
+    </Field>
+    <Field label="Summary" hint="One-line summary shown in the news list.">
+      <input class="input" name="summary" value={defaults.summary ?? ""} />
+    </Field>
+  </Section>
+
+  <Section title="Image">
+    <ImageInput name="image" label="Image" defaultValue={defaults.image ?? ""} />
+  </Section>
+
+  <Section title="Body" description="Separate paragraphs with a blank line.">
+    <textarea class="textarea" name="body" rows="8">{defaults.body ?? ""}</textarea>
+  </Section>
+
+  {error && <p class="text-destructive text-sm">{error}</p>}
+  <SubmitBar cancelHref="/admin/news" />
+</form>

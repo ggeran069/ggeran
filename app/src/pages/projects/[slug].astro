@@ -1,0 +1,110 @@
+---
+/**
+ * Project detail page. Dynamic params resolve per request (Astro.params) —
+ * the old generateStaticParams is gone because everything renders on demand.
+ * Unknown slug → rewrite to the styled 404 (replaces notFound()).
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Gallery from "@/components/site/Gallery.astro";
+import { getProject } from "@/lib/data";
+
+const { slug } = Astro.params;
+const p = await getProject(Astro.locals, slug ?? "");
+if (!p) return Astro.rewrite("/404");
+
+const dateLabel = p.date
+  ? new Date(p.date).toLocaleDateString("en-US", { year: "numeric", month: "long" })
+  : null;
+---
+<BaseLayout title={p.title} ogImage={p.image}>
+  <section class="px-edge-margin-mobile lg:px-edge-margin-desktop pt-gutter">
+    <div class="max-w-[1440px] mx-auto">
+      <a
+        href="/projects"
+        class="font-display text-label-caps uppercase text-on-surface-variant hover:text-primary inline-flex items-center gap-1"
+      >
+        ← Projects
+      </a>
+    </div>
+  </section>
+
+  <header class="px-edge-margin-mobile lg:px-edge-margin-desktop py-section-gap border-b border-structural-gray">
+    <div class="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-gutter items-end">
+      <div class="lg:col-span-8">
+        <span class="font-display text-label-caps text-on-surface-variant block mb-4 uppercase">
+          {p.category}{p.year ? ` · ${p.year}` : ""}
+        </span>
+        <h1 class="font-display text-display-xl-mobile lg:text-display-xl text-primary uppercase leading-none">
+          {p.title}
+        </h1>
+      </div>
+      <div class="lg:col-span-4 lg:text-right space-y-1">
+        {p.location && (
+          <p class="font-display text-label-caps uppercase text-on-surface-variant">
+            {p.location}
+          </p>
+        )}
+        {dateLabel && (
+          <p class="font-display text-label-caps uppercase text-on-surface-variant">
+            {dateLabel}
+          </p>
+        )}
+      </div>
+    </div>
+  </header>
+
+  {p.image && (
+    <section class="px-edge-margin-mobile lg:px-edge-margin-desktop py-section-gap">
+      <div class="max-w-[1440px] mx-auto bg-surface-container overflow-hidden">
+        <img
+          src={p.image}
+          alt={p.title}
+          width="2048"
+          height="1365"
+          fetchpriority="high"
+          decoding="async"
+          class="w-full h-auto"
+        />
+      </div>
+    </section>
+  )}
+
+  <section class="px-edge-margin-mobile lg:px-edge-margin-desktop pb-section-gap">
+    <div class="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+      <dl class="lg:col-span-3 space-y-4">
+        {[
+          ["Year", p.year ? String(p.year) : null],
+          ["Date", p.date],
+          ["Category", p.category],
+          ["Location", p.location],
+          ["Medium", p.medium],
+          ["Dimensions", p.dimensions],
+          ["Edition", p.edition],
+          ["Availability", p.availability],
+          ["Series", p.series],
+          ["Reference", p.ref ? `#${p.ref}` : null],
+        ].map(([label, value]) =>
+          value ? (
+            <div>
+              <dt class="font-display text-label-caps uppercase text-on-surface-variant/60 mb-1">
+                {label}
+              </dt>
+              <dd class="font-body text-body-md text-on-surface">{value}</dd>
+            </div>
+          ) : null,
+        )}
+      </dl>
+      <div class="lg:col-span-8 lg:col-start-5 max-w-2xl font-body text-body-lg text-on-surface space-y-6">
+        {p.body && <p class="whitespace-pre-line">{p.body}</p>}
+      </div>
+    </div>
+  </section>
+
+  {p.gallery.length > 0 && (
+    <section class="px-edge-margin-mobile lg:px-edge-margin-desktop pb-section-gap">
+      <div class="max-w-[1440px] mx-auto">
+        <Gallery images={p.gallery} altPrefix={p.title} />
+      </div>
+    </section>
+  )}
+</BaseLayout>

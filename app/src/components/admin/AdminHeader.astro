@@ -1,0 +1,23 @@
+---
+/** Shared admin top bar: view-site link + sign out (form → Astro Action). */
+import { actions } from "astro:actions";
+
+interface Props {
+  title: string;
+}
+const { title } = Astro.props;
+---
+<header class="flex items-center justify-between border-b border-structural-gray pb-gutter mb-section-gap">
+  <div class="flex items-baseline gap-gutter">
+    <span class="font-display text-headline-md uppercase">{title}</span>
+    <a
+      href="/"
+      class="font-body text-caption text-on-surface-variant hover:text-primary uppercase"
+    >
+      ← View site
+    </a>
+  </div>
+  <form method="POST" action={actions.auth.signOut}>
+    <button type="submit" class="btn btn-outline btn-sm">Sign out</button>
+  </form>
+</header>

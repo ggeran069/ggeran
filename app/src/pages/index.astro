@@ -1,0 +1,26 @@
+---
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import Hero from "@/components/site/Hero.astro";
+import { getFeaturedProjects, getProjects, getSiteContent } from "@/lib/data";
+
+const [featured, all, site] = await Promise.all([
+  getFeaturedProjects(Astro.locals),
+  getProjects(Astro.locals),
+  getSiteContent(Astro.locals),
+]);
+
+// Server-side random pick per request. Fallback chain: featured with images →
+// any project with images → null (Hero renders its static block — never blank).
+const pool = featured.some((p) => p.image)
+  ? featured.filter((p) => p.image)
+  : all.filter((p) => p.image);
+const withImages = pool.map((p) => ({ slug: p.slug, title: p.title, year: p.year, image: p.image as string }));
+const p = withImages.length ? withImages[Math.floor(Math.random() * withImages.length)] : null;
+---
+<BaseLayout>
+  <Hero
+    project={p ? { slug: p.slug, title: p.title, year: p.year, image: p.image } : null}
+    heroTitle={site.heroTitle}
+    heroSubtitle={site.heroSubtitle}
+  />
+</BaseLayout>

@@ -1,0 +1,29 @@
+---
+/**
+ * Dark/light toggle. Replaces next-themes: the `.dark` class is managed by the
+ * inline init script in BaseLayout + one delegated click listener; icon
+ * visibility is pure CSS, so there is no hydration or mounted-guard dance.
+ */
+---
+<button
+  type="button"
+  data-theme-toggle
+  aria-label="Toggle dark mode"
+  class="btn btn-ghost btn-icon text-on-surface-variant hover:text-primary"
+>
+  <!-- Sun (visible in dark mode → switch to light) -->
+  <svg class="theme-icon-sun h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
+  </svg>
+  <!-- Moon (visible in light mode → switch to dark) -->
+  <svg class="theme-icon-moon h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+  </svg>
+</button>
+
+<style>
+  :global(.theme-icon-sun) { display: none; }
+  :global(.dark .theme-icon-sun) { display: block; }
+  :global(.dark .theme-icon-moon) { display: none; }
+</style>

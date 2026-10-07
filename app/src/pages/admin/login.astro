@@ -1,0 +1,38 @@
+---
+/**
+ * Admin sign-in. Plain form → actions.auth.signIn; on error Astro re-renders
+ * this page with the action result (works without JS). On success the action
+ * 303s to /admin and sets the session cookie.
+ */
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { actions } from "astro:actions";
+
+const result = Astro.getActionResult(actions.auth.signIn);
+if (result?.data) {
+  // Success: the action set the session cookie; the page does the PRG hop.
+  return Astro.redirect("/admin");
+}
+const error = result?.error?.message ?? null;
+---
+<AdminLayout title="Sign in">
+  <div class="min-h-[80vh] flex items-center justify-center px-edge-margin-mobile lg:px-edge-margin-desktop py-section-gap">
+    <div class="card w-full max-w-sm">
+      <div class="px-4">
+        <h1 class="card-title font-display uppercase tracking-tight">Admin</h1>
+        <p class="text-on-surface-variant text-sm mt-1">Sign in to manage the site.</p>
+      </div>
+      <form method="POST" action={actions.auth.signIn} class="px-4 space-y-4">
+        <div class="space-y-2">
+          <label class="label" for="email">Email</label>
+          <input class="input" id="email" name="email" type="email" autocomplete="username" required />
+        </div>
+        <div class="space-y-2">
+          <label class="label" for="password">Password</label>
+          <input class="input" id="password" name="password" type="password" autocomplete="current-password" required />
+        </div>
+        {error && <p class="text-sm text-destructive">{error}</p>}
+        <button type="submit" class="btn btn-primary w-full">Sign in</button>
+      </form>
+    </div>
+  </div>
+</AdminLayout>

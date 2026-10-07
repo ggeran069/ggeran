@@ -1,0 +1,60 @@
+---
+/**
+ * Contact page. The instagram href comes from the CMS with no hardcoded
+ * fallback URL (the source linked to instagram.com root when unset) — the
+ * link only renders when a real URL exists.
+ */
+import BaseLayout from "@/layouts/BaseLayout.astro";
+import { getSiteContent } from "@/lib/data";
+
+const c = await getSiteContent(Astro.locals);
+---
+<BaseLayout title="Contact">
+  <section class="px-edge-margin-mobile lg:px-edge-margin-desktop py-section-gap">
+    <div class="max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+      <div class="lg:col-span-3">
+        <h1 class="font-display text-display-xl-mobile lg:text-display-xl uppercase tracking-tighter">
+          Contact
+        </h1>
+      </div>
+      <div class="lg:col-span-8 lg:col-start-5 max-w-2xl">
+        {c.contactIntro && (
+          <p class="font-body text-body-lg text-on-surface mb-section-gap">
+            {c.contactIntro}
+          </p>
+        )}
+        <dl class="font-body text-body-lg text-on-surface space-y-6">
+          {c.contactEmail && (
+            <div>
+              <dt class="font-display text-label-caps uppercase text-on-surface-variant mb-1">
+                Studio
+              </dt>
+              <dd>
+                <a href={`mailto:${c.contactEmail}`} class="underline hover:text-primary">
+                  {c.contactEmail}
+                </a>
+              </dd>
+            </div>
+          )}
+          {c.contactInstagramUrl && (
+            <div>
+              <dt class="font-display text-label-caps uppercase text-on-surface-variant mb-1">
+                Instagram
+              </dt>
+              <dd>
+                <a
+                  href={c.contactInstagramUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="underline hover:text-primary"
+                >
+                  {c.contactInstagramHandle || "Instagram"}
+                </a>
+              </dd>
+            </div>
+          )}
+        </dl>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

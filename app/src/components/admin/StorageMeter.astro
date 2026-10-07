@@ -1,0 +1,58 @@
+---
+/**
+ * Media-storage usage bar (R2 vs the configured quota). Server-rendered.
+ * Quota values are passed in by the page (they come from request env).
+ */
+import { formatMB, type MediaUsage } from "@/lib/media";
+
+interface Props {
+  usage: MediaUsage | null;
+  quotaMB: number;
+}
+const { usage, quotaMB } = Astro.props;
+
+const quotaBytes = quotaMB * 1024 * 1024;
+const pct = usage ? Math.min(100, Math.round((usage.usedBytes / quotaBytes) * 100)) : 0;
+const danger = pct >= 95;
+const warn = pct >= 80;
+---
+{
+  !usage ? (
+    <p class="font-body text-caption text-on-surface-variant border border-structural-gray p-gutter">
+      Storage tracking unavailable — R2 is not reachable.
+    </p>
+  ) : (
+    <div class="border border-structural-gray p-gutter">
+      <div class="flex items-baseline justify-between mb-unit gap-gutter">
+        <span class="font-display text-label-caps uppercase text-on-surface-variant">
+          Media storage
+        </span>
+        <span class="font-body text-caption text-on-surface-variant whitespace-nowrap">
+          {formatMB(usage.usedBytes)} MB of {quotaMB} MB · {usage.count} file
+          {usage.count === 1 ? "" : "s"}
+        </span>
+      </div>
+      <div
+        class="h-2 w-full bg-surface-container rounded-full overflow-hidden"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <div
+          class={`h-full transition-all ${danger ? "bg-destructive" : "bg-primary"}`}
+          style={`width: ${Math.max(pct, 2)}%`}
+        />
+      </div>
+      {warn && (
+        <p
+          class={`font-body text-caption mt-unit ${danger ? "text-destructive" : "text-on-surface-variant"}`}
+        >
+          {danger
+            ? "Storage almost full — delete unused files in Media to free space."
+            : "Approaching the storage limit."}
+        </p>
+      )}
+    </div>
+  )
+}

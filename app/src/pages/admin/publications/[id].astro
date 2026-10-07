@@ -1,0 +1,36 @@
+---
+import { eq } from "drizzle-orm";
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import AdminHeader from "@/components/admin/AdminHeader.astro";
+import { actions } from "astro:actions";
+
+// PRG: the action returned data = success → back to the section list.
+const result = Astro.getActionResult(actions.publications.update);
+if (result?.data) return Astro.redirect("/admin/publications");
+import PublicationForm from "@/components/admin/PublicationForm.astro";
+import { getDb } from "@/lib/db";
+import { publications } from "@/db/schema";
+import { getSiteContent, parseCategoryList } from "@/lib/data";
+
+const db = getDb(Astro.locals);
+if (!db) return Astro.rewrite("/404");
+
+const { id } = Astro.params;
+const rows = await db.select().from(publications).where(eq(publications.id, Number(id))).limit(1);
+const row = rows[0];
+if (!row) return Astro.rewrite("/404");
+
+const site = await getSiteContent(Astro.locals);
+---
+<AdminLayout title={`Edit: ${row.title}`}>
+  <div class="px-edge-margin-mobile lg:px-edge-margin-desktop py-gutter">
+    <div class="max-w-[1100px] mx-auto">
+      <AdminHeader title={`Edit: ${row.title}`} />
+      <PublicationForm
+        mode="update"
+        defaults={row}
+        categories={parseCategoryList(site.projectCategories)}
+      />
+    </div>
+  </div>
+</AdminLayout>
