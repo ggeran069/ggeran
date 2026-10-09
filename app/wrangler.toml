@@ -17,9 +17,11 @@ compatibility_flags = ["nodejs_compat"]
 binding = "SESSION"
 id = "f28cf46e937e45a5b0745abdb4fb3a12"
 
-[[r2_buckets]]
-binding = "MEDIA"
-bucket_name = "ggeran-media"
+# Re-enable once R2 is active on the account (currently returns API error
+# 10042 — the dashboard enablement/checkout step hasn't completed):
+# [[r2_buckets]]
+# binding = "MEDIA"
+# bucket_name = "ggeran-media"
 
 [[d1_databases]]
 binding = "DB"

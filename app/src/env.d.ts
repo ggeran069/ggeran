@@ -1,8 +1,16 @@
 /**
- * Environment/bindings shape for the ggeran Worker (Pages Functions runtime).
+ * Environment/bindings shape for the ggeran Worker.
  * Hand-written (not `wrangler types`) so the offline Nix build needs no
  * codegen. Only the surfaces this app actually uses are declared.
  */
+
+/**
+ * Astro v6+ exposes Worker bindings via this module (not Astro.locals).
+ * Provided by workerd in prod and by the adapter's platformProxy in dev.
+ */
+declare module "cloudflare:workers" {
+  export const env: Env;
+}
 interface Env {
   /** R2 bucket holding site media (see wrangler.toml). */
   MEDIA: R2Bucket;
@@ -66,19 +74,4 @@ interface R2Object {
 interface R2ObjectBody extends R2Object {
   body: ReadableStream;
   writeHttpMetadata(headers: Headers): void;
-}
-
-declare namespace App {
-  interface Locals {
-    /**
-     * Set by the Cloudflare adapter (request handler in prod, platformProxy
-     * middleware in dev). Always present where getEnv() is called.
-     */
-    runtime?: {
-      env: Env;
-      cf: unknown;
-      caches: CacheStorage;
-      ctx: { waitUntil(promise: Promise<unknown>): void };
-    };
-  }
 }

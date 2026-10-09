@@ -1,23 +1,19 @@
-/**
- * Single access point for Cloudflare bindings + secrets. The adapter exposes
- * them on `Astro.locals.runtime.env` (request handler in prod, platformProxy
- * middleware in `astro dev`), so every call site threads `Astro.locals` (or a
- * middleware/APIContext) through here instead of touching process.env.
- *
- * Node-side scripts (db:seed, migrate:blob) do NOT go through this module —
- * they read process.env directly.
- */
-/**
- * Env, R2Bucket & co. are ambient globals declared in src/env.d.ts.
- */
+import { env } from "cloudflare:workers";
 
-export function getEnv(locals: App.Locals | undefined): Env {
-  const env = locals?.runtime?.env;
-  if (!env) {
-    throw new Error(
-      "Cloudflare runtime not available — are you running outside a request context?",
-    );
-  }
+/**
+ * Single access point for Cloudflare bindings + secrets. Astro v6+ removed
+ * `Astro.locals.runtime.env` — bindings come from the `cloudflare:workers`
+ * module instead, available in all server code (request handler in prod,
+ * platformProxy shim in `astro dev`). Bindings a deploy lacks (e.g. MEDIA
+ * while R2 is disabled) are simply undefined — callers already handle that
+ * (lib/db returns null, lib/media catches).
+ *
+ * Node-side scripts (db:seed-sql, migrate:blob) do NOT go through this
+ * module — they read process.env directly.
+ *
+ * The `locals` parameter is kept (and ignored) so call sites read the same.
+ */
+export function getEnv(_locals: App.Locals | undefined): Env {
   return env;
 }
 

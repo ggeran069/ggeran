@@ -8,7 +8,7 @@ export default defineConfig({
   // Every DB-driven page renders on demand (matches the old Next ISR-60
   // semantics, and keeps the offline Nix build hermetic — no build-time DB).
   output: 'server',
-  site: 'https://ggeran.pages.dev', // TODO: confirm production hostname
+  site: 'https://ggeran.ngeran.workers.dev', // workers.dev URL from the first deploy; swap for a custom domain if attached
   adapter: cloudflare({
     // Exposes wrangler.toml bindings + .dev.vars to `astro dev` via miniflare.
     platformProxy: { enabled: true },
