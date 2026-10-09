@@ -10,3 +10,7 @@ app/.env
 app/.wrangler/
 app/worker-configuration.d.ts
 .plans/
+
+# SSH deploy keys live OUTSIDE the repo — never commit these.
+ggeran069
+ggeran069.pub

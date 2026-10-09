@@ -1,12 +1,13 @@
-# Cloudflare Pages config for ggeran.
-# Bindings here apply on `wrangler pages deploy` (and to `astro dev` via the
-# adapter's platformProxy/miniflare). Secrets are NOT in this file — set them
-# with `wrangler pages secret put <KEY>` (or `just secret <KEY>`); local dev
-# reads app/.dev.vars instead. For a Git-connected Pages project, mirror the
-# bindings in the dashboard (Settings → Bindings/Variables) if the build
-# doesn't pick them up from this file.
+# Cloudflare WORKERS config for ggeran (@astrojs/cloudflare v14 deploys as a
+# Worker with static assets — the legacy Pages `_worker.js` layout is gone).
+#
+# `astro build` generates the real deploy config at dist/server/wrangler.json
+# (main = server entry, assets = dist/client, SESSION KV for Astro sessions)
+# and writes the redirect .wrangler/deploy/config.json, so:
+#     npx wrangler deploy          # from app/ — uses the generated config
+# Secrets are NOT in this file — set them with `just secret <KEY>` (which runs
+# `wrangler secret put`); local dev reads app/.dev.vars instead.
 name = "ggeran"
-pages_build_output_dir = "dist"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
@@ -19,3 +20,4 @@ binding = "DB"
 database_name = "ggeran-db"
 # Replace with the real id printed by: just d1-create
 database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "drizzle"

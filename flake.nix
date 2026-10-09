@@ -1,15 +1,16 @@
 # =========================================================================
-# GGERAN — Astro 5 + Tailwind v4 SSR site on Cloudflare Pages
+# GGERAN — Astro SSR site on Cloudflare WORKERS
 # =========================================================================
 # Defines:
 #   1. devShells.default — nodejs + npm, direnv-loaded.
-#   2. packages.site     — the built site (dist/ incl. _worker.js), built
-#                          OFFLINE and reproducibly via buildNpmPackage.
+#   2. packages.site     — the built site (dist/: client/ + server/ worker),
+#                          built OFFLINE and reproducibly via buildNpmPackage.
 #      (also packages.default — `nix build` builds the site)
 #
-# There is no image / registry / k8s story in this repo on purpose: the site
-# is SSR on Cloudflare Pages (deployed with `just cf` → wrangler pages deploy).
-# ONE deploy story, same Nix-built bytes every time.
+# Deploys are git-push-driven: GitHub → Cloudflare Workers Builds runs
+# `npm ci && npm run build && npx wrangler deploy` in app/. The Nix build
+# stays as a hermetic reproducibility check (`just site`); `just cf` runs
+# the same npm build + wrangler deploy locally as a manual override.
 #
 # ⚠️ DEPS HASH: buildNpmPackage needs `npmDepsHash` matching
 # app/package-lock.json. After ANY dependency change:
@@ -20,15 +21,16 @@
 #
 # Dev → deploy loop:
 #     just serve      # astro dev (HMR) → http://localhost:4321
-#     just site && just cf     # Nix-built bytes → Cloudflare Pages (production)
-#     just cf-preview          # → a preview deployment instead
+#     just site       # hermetic reproducibility check (optional)
+#     git push        # GitHub → Cloudflare Workers Builds → production
+#     just cf         # …or a manual deploy without pushing
 #
 # The build renders NOTHING at runtime (output: 'server', no prerendered DB
 # pages), so the offline sandbox never needs the database. Telemetry is
 # disabled (ASTRO_TELEMETRY_DISABLED) so it never phones home or writes $HOME.
 # =========================================================================
 {
-  description = "ggeran — Astro portfolio on Cloudflare Pages; Nix devShell + offline site build";
+  description = "ggeran — Astro portfolio on Cloudflare Workers; Nix devShell + offline site build";
 
   inputs.nixpkgs.url = "nixpkgs/nixos-26.05";
 
@@ -44,7 +46,7 @@
 
           # ── build the site (reproducible, OFFLINE via npmDepsHash) ──
           # buildNpmPackage runs `npm ci` (offline, deps resolved from the
-          # hash) then `npm run build` → dist/ (static assets + _worker.js).
+          # hash) then `npm run build` → dist/ (client assets + server worker).
           # installPhase exposes dist/ as the package output.
           ggeranSite = pkgs.buildNpmPackage {
             pname = "ggeran";
@@ -61,7 +63,7 @@
           };
         in {
           default = ggeranSite;
-          site    = ggeranSite;   # → `just site` / `just cf` (wrangler pages deploy)
+          site    = ggeranSite;   # → `just site` (hermetic check; deploys are git-push-driven)
         });
 
       devShells = forAllSystems (system:
@@ -78,7 +80,7 @@
               echo "  ❯ ggeran devshell active"
               echo "      node    $(node -v 2>/dev/null || echo '—')"
               echo "      serve   just serve          (astro dev → http://localhost:4321)"
-              echo "      deploy  just cf             (Nix-built bytes → Cloudflare Pages)"
+              echo "      deploy  git push            (→ Cloudflare Workers Builds) or just cf"
               echo "      deps    (cd app && npm install) → just relock → just site"
               echo ""
             '';

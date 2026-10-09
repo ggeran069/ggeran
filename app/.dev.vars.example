@@ -1,6 +1,6 @@
 # Copy to app/.dev.vars (gitignored) for local dev.
 # Deployed values are set once with: just secret <KEY>
-# (or in the Pages dashboard for the Git-integration deploy).
+# (or in the Workers dashboard: ggeran → Settings → Variables and Secrets).
 AUTH_SECRET=dev-only-secret-change-me
 ADMIN_EMAIL=admin@example.com
 ADMIN_PASSWORD=changeme

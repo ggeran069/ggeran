@@ -1,28 +1,32 @@
 # =========================================================================
-# ggeran — Astro SSR portfolio on Cloudflare Pages
+# ggeran — Astro SSR portfolio on Cloudflare WORKERS
 # =========================================================================
-# Deploy target: Cloudflare Pages (Workers-style _worker.js output). There is
-# no k3s/registry/nginx story in this repo — the Nix build produces the exact
-# bytes that get uploaded, so local and production can't drift.
+# Deploy pipeline: git push → GitHub → Cloudflare Workers Builds (git
+# integration). Cloudflare runs `npm ci && npm run build` then
+# `npx wrangler deploy` in app/ on every push to main; non-main branches get
+# preview URLs. `just cf` still works as a manual override (Workers has no
+# direct-upload lock like Pages did).
 #
 # One-time setup:
 #   npx wrangler login                                    (or CLOUDFLARE_API_TOKEN)
-#   npx wrangler pages project create ggeran --production-branch main
-#   npx wrangler r2 bucket create ggeran-media            (or: just r2-create)
-#   just secret DATABASE_URL / AUTH_SECRET / ADMIN_EMAIL / ADMIN_PASSWORD
+#   just r2-create                                        # ggeran-media bucket
+#   just d1-create                                        # paste id into app/wrangler.toml
+#   npx wrangler deploy                                   # first deploy (creates the Worker)
+#   just secret AUTH_SECRET / ADMIN_EMAIL / ADMIN_PASSWORD
+#   just db-apply remote && just db-seed remote           # content into prod D1
 #
-# ⚠️ After ANY dependency change: (cd app && npm install) → just relock.
-# ⚠️ git add -A before just site/cf — Nix evaluates the git INDEX.
+# GitHub → Cloudflare (dashboard, once):
+#   Workers & Pages → ggeran → Settings → Build → Connect (git)
+#     root directory:  app
+#     build command:   npm ci && npm run build
+#     deploy command:  npx wrangler deploy
+#
+# ⚠️ git add -A before just site — Nix evaluates the git INDEX.
 # =========================================================================
 set shell := ["bash", "-c"]
 
-cf_project := "ggeran"
-bucket     := "ggeran-media"
-db_name    := "ggeran-db"
-
-# Build the site offline via Nix into site-out/ (reproducible bytes).
-site:
-    nix build .#site --out-link site-out
+bucket  := "ggeran-media"
+db_name := "ggeran-db"
 
 # Plain (non-Nix) build loop — catches broken pages/imports fast.
 check:
@@ -35,7 +39,11 @@ serve:
 
 # Preview the SSR build on the real workerd runtime (after `just check`).
 preview:
-    cd app && npm run build && npx wrangler pages dev dist
+    cd app && npm run build && npx wrangler dev
+
+# Build the site offline via Nix into site-out/ (reproducibility check).
+site:
+    nix build .#site --out-link site-out
 
 # Pre-flight: wrangler auth, deps installed, git index clean.
 doctor:
@@ -59,36 +67,21 @@ relock:
     sed -i -E "s|npmDepsHash = .*|npmDepsHash = \"$hash\";  # from app/package-lock.json via just relock|" flake.nix
     echo "updated flake.nix — rebuild with: just site"
 
-# Deploy PRODUCTION: Nix-built bytes → Cloudflare Pages.
-cf: site
-    #!/usr/bin/env bash
-    set -euo pipefail
-    rm -rf app/dist && mkdir -p app/dist && cp -r site-out/. app/dist/
-    # Nix store outputs are read-only; wrangler needs a normal writable tree.
-    chmod -R u+w app/dist
-    cd app && npx wrangler pages deploy dist --project-name {{cf_project}} --branch main
-
-# Preview deployment (a branch URL; production untouched).
-# Override the branch: CF_BRANCH=feat-x just cf-preview
-cf-preview: site
-    #!/usr/bin/env bash
-    set -euo pipefail
-    branch="${CF_BRANCH:-preview}"
-    rm -rf app/dist && mkdir -p app/dist && cp -r site-out/. app/dist/
-    chmod -R u+w app/dist
-    cd app && npx wrangler pages deploy dist --project-name {{cf_project}} --branch "$branch"
+# Manual PRODUCTION deploy (same command Cloudflare's build runs on push).
+cf:
+    cd app && npm run build && npx wrangler deploy
 
 # Push a secret from app/.dev.vars (or enter a value interactively).
-#   just secret DATABASE_URL
+#   just secret AUTH_SECRET
 secret KEY:
     #!/usr/bin/env bash
     set -euo pipefail
     v=$(grep -E "^{{KEY}}=" app/.dev.vars 2>/dev/null | head -1 | cut -d= -f2- || true)
     cd app
     if [ -n "$v" ]; then
-      printf '%s' "$v" | npx wrangler pages secret put "{{KEY}}" --project-name {{cf_project}}
+      printf '%s' "$v" | npx wrangler secret put "{{KEY}}"
     else
-      npx wrangler pages secret put "{{KEY}}" --project-name {{cf_project}}
+      npx wrangler secret put "{{KEY}}"
     fi
 
 # One-time: create the R2 media bucket.
@@ -120,10 +113,6 @@ db-seed MODE:
     #!/usr/bin/env bash
     set -euo pipefail
     (cd app && npm run -s db:seed-sql && npx wrangler d1 execute {{db_name}} --{{MODE}} --file=drizzle/seed.sql)
-
-# One-time: create the Pages project.
-cf-create:
-    cd app && npx wrangler pages project create {{cf_project}} --production-branch main
 
 shell:
     nix develop
