@@ -1,0 +1,9 @@
+# Root anchor for Cloudflare Workers Builds when the build runs at the repo
+# root (root directory unset). This file is NOT the real config — the deploy
+# redirect below points wrangler at the adapter-generated config from the
+# Astro build:
+#     .wrangler/deploy/config.json -> app/dist/server/wrangler.json
+# `npm run build` (root) does: cd app && npm ci && npm run build, which
+# regenerates that target. Nothing else should live at the root.
+name = "ggeran"
+compatibility_date = "2025-09-01"

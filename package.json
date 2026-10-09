@@ -1,0 +1,13 @@
+{
+  "name": "ggeran-root",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Root bootstrap for Cloudflare Workers Builds: its default build runs at the repo root, so these scripts delegate into app/ (the Astro app). The app itself still builds and deploys exactly as documented in justfile.",
+  "scripts": {
+    "build": "cd app && npm ci && npm run build",
+    "deploy": "cd app && npx wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.148.0"
+  }
+}
