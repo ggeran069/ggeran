@@ -11,6 +11,12 @@ name = "ggeran"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Astro session KV (adapter auto-adds this binding; bound explicitly so the
+# deploy adopts the existing namespace instead of re-provisioning).
+[[kv_namespaces]]
+binding = "SESSION"
+id = "f28cf46e937e45a5b0745abdb4fb3a12"
+
 [[r2_buckets]]
 binding = "MEDIA"
 bucket_name = "ggeran-media"
@@ -18,6 +24,5 @@ bucket_name = "ggeran-media"
 [[d1_databases]]
 binding = "DB"
 database_name = "ggeran-db"
-# Replace with the real id printed by: just d1-create
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "ffa58feb-1112-4d71-885f-37e4b38e4f76"
 migrations_dir = "drizzle"
