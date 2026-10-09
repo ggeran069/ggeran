@@ -1,9 +1,42 @@
-# Root anchor for Cloudflare Workers Builds when the build runs at the repo
-# root (root directory unset). This file is NOT the real config — the deploy
-# redirect below points wrangler at the adapter-generated config from the
-# Astro build:
-#     .wrangler/deploy/config.json -> app/dist/server/wrangler.json
-# `npm run build` (root) does: cd app && npm ci && npm run build, which
-# regenerates that target. Nothing else should live at the root.
+# Root deploy config for Cloudflare Workers Builds, which runs at the repo
+# root (root directory unset) and does a pre-build wrangler config check —
+# so this must be a COMPLETE, self-contained config: `main`/`assets` point
+# into the Astro build output that `npm run build` (root → app/) produces
+# before `npx wrangler deploy` runs.
+#
+# ⚠️ BINDINGS ARE DUPLICATED with app/wrangler.toml (the adapter rejects
+# user main/assets there, and this root copy needs them for root-context
+# deploys). Keep the two [[kv_namespaces]]/[[d1_databases]] blocks in sync —
+# app/wrangler.toml is the source of truth for bindings.
 name = "ggeran"
 compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+main = "app/dist/server/entry.mjs"
+assets = { binding = "ASSETS", directory = "app/dist/client" }
+
+# The adapter build emits plain ES modules (no bundling wanted).
+no_bundle = true
+
+[[rules]]
+type = "ESModule"
+globs = ["**/*.js", "**/*.mjs"]
+
+workers_dev = true
+preview_urls = true
+
+# Astro session KV (adapter auto-adds this binding; bound explicitly so the
+# deploy adopts the existing namespace instead of re-provisioning).
+[[kv_namespaces]]
+binding = "SESSION"
+id = "f28cf46e937e45a5b0745abdb4fb3a12"
+
+# Re-enable once R2 is active on the account (currently returns API error
+# 10042 — the dashboard enablement/checkout step hasn't completed):
+# [[r2_buckets]]
+# binding = "MEDIA"
+# bucket_name = "ggeran-media"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ggeran-db"
+database_id = "ffa58feb-1112-4d71-885f-37e4b38e4f76"
