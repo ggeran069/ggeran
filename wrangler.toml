@@ -12,7 +12,7 @@ name = "ggeran"
 compatibility_date = "2025-09-01"
 compatibility_flags = ["nodejs_compat"]
 main = "app/dist/server/entry.mjs"
-assets = { binding = "ASSETS", directory = "app/dist/client" }
+assets = { binding = "ASSETS", directory = "app/dist/client", run_worker_first = true }
 
 # The adapter build emits plain ES modules (no bundling wanted).
 no_bundle = true
