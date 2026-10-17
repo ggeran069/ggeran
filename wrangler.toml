@@ -28,7 +28,7 @@ preview_urls = true
 # deploy adopts the existing namespace instead of re-provisioning).
 [[kv_namespaces]]
 binding = "SESSION"
-id = "c2d97cbd239e4da7922f2a583d230b63"
+id = "f28cf46e937e45a5b0745abdb4fb3a12"
 
 # Re-enable once R2 is active on the account (currently returns API error
 # 10042 — the dashboard enablement/checkout step hasn't completed):
@@ -39,4 +39,4 @@ id = "c2d97cbd239e4da7922f2a583d230b63"
 [[d1_databases]]
 binding = "DB"
 database_name = "ggeran-db"
-database_id = "05ebf6ca-0e13-43a8-8a26-5632e13dfadf"
+database_id = "ffa58feb-1112-4d71-885f-37e4b38e4f76"
