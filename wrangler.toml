@@ -28,7 +28,7 @@ preview_urls = true
 # deploy adopts the existing namespace instead of re-provisioning).
 [[kv_namespaces]]
 binding = "SESSION"
-id = "f28cf46e937e45a5b0745abdb4fb3a12"
+id = "c2d97cbd239e4da7922f2a583d230b63"
 
 # Re-enable once R2 is active on the account (currently returns API error
 # 10042 — the dashboard enablement/checkout step hasn't completed):
