@@ -152,6 +152,7 @@ export const server = {
     }),
 
     signOut: defineAction({
+      accept: "form", // no-JS HTML form submissions (the default is JSON-only)
       handler: async (_input, ctx) => {
         ctx.cookies.delete(SESSION_COOKIE, { path: "/" });
         return { ok: true };
